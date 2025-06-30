@@ -2,7 +2,7 @@
 
 /** @var yii\web\View $this */
 
-$this->title = 'IOT surf Dashboard';
+$this->title = 'iSurf IoT Dashboard';
 ?>
 <div class="site-index">
     <div class="p-5 mb-4 bg-transparent rounded-3">
