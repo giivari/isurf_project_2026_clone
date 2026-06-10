@@ -1,4 +1,8 @@
 // dashboard.js
+
+let qualityChartInstance = null;
+let tempChartInstance = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     
     // --- 1. Fetch and Update Metrics ---
@@ -6,12 +10,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const data = await iSurfAPI.getLatestReadings();
         if (!data) return;
 
-        // Map sensor names to UI elements (assuming sensor names match seed.sql)
         const mappings = {
-            'Soil Moisture Sensor 1': { val: 'metric-moisture', status: 'status-moisture' },
-            'Air Temperature': { val: 'metric-temp', status: 'status-temp' },
-            'Water Tank Level': { val: 'metric-water', progress: 'progress-water' },
-            'Water Quality (TDS)': { val: 'metric-tds', status: 'status-tds' }
+            'Water Quality (TDS)': { val: 'metric-tds', status: 'status-tds' },
+            'Water pH Level': { val: 'metric-ph', status: 'status-ph' },
+            'Water Temperature': { val: 'metric-temp', status: 'status-temp' }
         };
 
         for (const [sensorName, uiIds] of Object.entries(mappings)) {
@@ -20,26 +22,32 @@ document.addEventListener('DOMContentLoaded', function() {
                 const valEl = document.getElementById(uiIds.val);
                 if (valEl) valEl.textContent = reading.value;
 
-                if (uiIds.progress) {
-                    const progEl = document.getElementById(uiIds.progress);
-                    if (progEl) progEl.style.width = Math.min(100, Math.max(0, reading.value)) + '%';
-                }
-
-                // Status logic based on DS tokens
                 if (uiIds.status) {
                     const statEl = document.getElementById(uiIds.status);
-                    if (sensorName.includes('Moisture') && reading.value < 45) {
-                        statEl.textContent = 'Warning';
-                        statEl.className = 'ds-badge ds-badge-warning';
-                    } else if (sensorName.includes('Temperature') && reading.value > 30) {
-                        statEl.textContent = 'Hot';
-                        statEl.className = 'ds-badge ds-badge-danger';
-                    } else if (sensorName.includes('TDS') && reading.value > 600) {
-                        statEl.textContent = 'High';
-                        statEl.className = 'ds-badge ds-badge-warning';
-                    } else {
-                        statEl.textContent = 'Normal';
-                        statEl.className = 'ds-badge ds-badge-success';
+                    if (sensorName.includes('pH')) {
+                        if(reading.value < 5.5 || reading.value > 7.5) {
+                            statEl.textContent = 'warning';
+                            statEl.className = 'ds-badge ds-badge-warning';
+                        } else {
+                            statEl.textContent = 'optimal';
+                            statEl.className = 'ds-badge ds-badge-success';
+                        }
+                    } else if (sensorName.includes('Temperature')) {
+                        if(reading.value > 30) {
+                            statEl.textContent = 'hot';
+                            statEl.className = 'ds-badge ds-badge-danger';
+                        } else {
+                            statEl.textContent = 'good';
+                            statEl.className = 'ds-badge ds-badge-info';
+                        }
+                    } else if (sensorName.includes('TDS')) {
+                        if(reading.value > 800) {
+                            statEl.textContent = 'high';
+                            statEl.className = 'ds-badge ds-badge-warning';
+                        } else {
+                            statEl.textContent = 'optimal';
+                            statEl.className = 'ds-badge ds-badge-success';
+                        }
                     }
                 }
             }
@@ -47,82 +55,201 @@ document.addEventListener('DOMContentLoaded', function() {
         
         try {
             const stats = await iSurfAPI.getDashboardStats();
+            const nodesEl = document.getElementById('metric-nodes');
+            if(nodesEl) nodesEl.textContent = stats.online_devices;
             
-            // Update basic counts
-            document.getElementById('total-devices').textContent = stats.total_devices;
-            document.getElementById('active-sensors').textContent = stats.active_sensors;
-            document.getElementById('online-status').textContent = `${stats.online_devices} Online`;
-            document.getElementById('last-updated').textContent = iSurfAPI.formatTimeWithTZ(new Date());
+            const totalEl = document.getElementById('total-devices');
+            if(totalEl) totalEl.textContent = stats.total_devices;
+            
+            const lastUpdEl = document.getElementById('last-updated');
+            if(lastUpdEl) lastUpdEl.textContent = iSurfAPI.formatTimeWithTZ(new Date());
         } catch (e) {
             console.error("Failed to fetch dashboard stats", e);
         }
     }
 
     // --- 2. Chart.js Initialization ---
-    // Colors based on Design System
-    const blue500 = '#3B82F6';
-    const orange500 = '#F97316';
-    const ctx = document.getElementById('mainChart');
-    if (ctx) {
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
-                datasets: [
-                    {
-                        label: 'Soil Moisture (%)',
-                        data: [65, 62, 58, 50, 45, 75, 72],
-                        borderColor: blue500,
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        tension: 0.4,
-                        fill: true
-                    },
-                    {
-                        label: 'Temperature (°C)',
-                        data: [22, 21, 24, 28, 29, 26, 23],
-                        borderColor: orange500,
-                        backgroundColor: 'transparent',
-                        tension: 0.4,
-                        borderDash: [5, 5]
+    function initCharts() {
+        const blue500 = '#3B82F6';
+        const green500 = '#10B981';
+        const orange500 = '#F97316';
+        
+        const qCtx = document.getElementById('qualityChart');
+        if (qCtx) {
+            qualityChartInstance = new Chart(qCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [
+                        {
+                            label: 'TDS (ppm)',
+                            data: [420, 430, 425, 450, 480, 460, 440],
+                            borderColor: blue500,
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'pH Level',
+                            data: [6.5, 6.4, 6.6, 6.2, 6.1, 6.3, 6.5],
+                            borderColor: green500,
+                            backgroundColor: 'transparent',
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        y: { type: 'linear', display: true, position: 'left', grid: { color: '#f1f5f9' } },
+                        y1: { type: 'linear', display: true, position: 'right', grid: { drawOnChartArea: false } },
+                        x: { grid: { display: false } }
                     }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                scales: {
-                    y: { beginAtZero: true, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
                 }
-            }
-        });
+            });
+        }
+
+        const tCtx = document.getElementById('tempChart');
+        if (tCtx) {
+            tempChartInstance = new Chart(tCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [
+                        {
+                            label: 'Temperature (°C)',
+                            data: [22, 21, 24, 28, 29, 26, 23],
+                            borderColor: orange500,
+                            backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } },
+                    scales: {
+                        y: { beginAtZero: false, grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
     }
 
-    // --- 3. Toggle Valve ---
-    const valveBtn = document.getElementById('valve-toggle');
-    const valveKnob = document.getElementById('valve-knob');
-    const valveText = document.getElementById('valve-status-text');
-    let isValveOn = false;
-
-    if (valveBtn) {
-        valveBtn.addEventListener('click', () => {
-            isValveOn = !isValveOn;
-            if (isValveOn) {
-                valveBtn.style.backgroundColor = 'var(--primary-500)';
-                valveKnob.style.transform = 'translateX(28px)';
-                valveText.textContent = 'Currently ON (Manual)';
-                valveText.style.color = 'var(--primary-600)';
-            } else {
-                valveBtn.style.backgroundColor = 'var(--gray-200)';
-                valveKnob.style.transform = 'translateX(4px)';
-                valveText.textContent = 'Currently OFF';
-                valveText.style.color = 'var(--gray-400)';
+    // --- 3. Load Device Health ---
+    async function loadDeviceHealth() {
+        const listEl = document.getElementById('device-health-list');
+        if(!listEl) return;
+        
+        try {
+            const devices = await iSurfAPI.getDevices();
+            listEl.innerHTML = '';
+            
+            if(devices.length === 0) {
+                listEl.innerHTML = '<p class="text-gray-500">No devices registered.</p>';
+                return;
             }
-        });
+            
+            devices.forEach(d => {
+                const isOnline = d.status === 'online';
+                const statusColor = isOnline ? '#10B981' : '#EF4444';
+                const badgeClass = isOnline ? 'ds-badge-success' : 'ds-badge-danger';
+                
+                // Mock uptime and signal for visual realism matching reference
+                const uptime = isOnline ? (95 + Math.random() * 4.9).toFixed(1) + '%' : 'N/A';
+                const signal = isOnline ? Math.floor(70 + Math.random() * 30) + '%' : 'N/A';
+                
+                const card = document.createElement('div');
+                card.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid var(--gray-100); border-radius: 8px; background-color: #FAFAFA;';
+                card.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <svg class="w-5 h-5" style="color: ${statusColor}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
+                        <div>
+                            <p class="text-body font-bold" style="color: var(--gray-900); margin: 0 0 4px 0;">${d.name}</p>
+                            <p class="text-caption text-gray-500" style="margin: 0;">${d.device_code}</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 16px; align-items: center; text-align: center;">
+                        <div style="display: none; @media(min-width: 640px){ display: block; }">
+                            <p class="text-caption text-gray-500" style="margin: 0 0 4px 0;">Uptime</p>
+                            <p class="text-body font-bold" style="color: var(--gray-900); margin: 0;">${uptime}</p>
+                        </div>
+                        <div style="display: none; @media(min-width: 640px){ display: block; }">
+                            <p class="text-caption text-gray-500" style="margin: 0 0 4px 0;">Signal</p>
+                            <p class="text-body font-bold" style="color: var(--gray-900); margin: 0;">${signal}</p>
+                        </div>
+                        <span class="ds-badge ${badgeClass}">${d.status}</span>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        } catch(e) {
+            listEl.innerHTML = '<p class="text-red-500">Failed to load devices.</p>';
+        }
     }
+
+    // --- 4. Irrigation Control (Dashboard context) ---
+    async function loadPumpStatus() {
+        const devices = await iSurfAPI.getDevices();
+        const irrigationDev = devices.find(d => d.type === 'esp32_irrigation');
+        
+        if(irrigationDev) {
+            window.dashboardIrrigationDevId = irrigationDev.id;
+            const res = await iSurfAPI.getPumpStatus(irrigationDev.id);
+            updatePumpUI(res.pump_on);
+        } else {
+            document.getElementById('dash-pump-status').textContent = 'No Controller Found';
+            document.getElementById('valve-btn').disabled = true;
+            document.getElementById('valve-btn').style.opacity = '0.5';
+        }
+    }
+
+    function updatePumpUI(isOn) {
+        window.isDashPumpOn = isOn;
+        const btn = document.getElementById('valve-btn');
+        const status = document.getElementById('dash-pump-status');
+        
+        if (isOn) {
+            btn.textContent = 'Turn Off';
+            btn.style.backgroundColor = '#EF4444'; // Red for Off
+            status.textContent = 'Active';
+            status.style.color = '#10B981'; // Green text
+        } else {
+            btn.textContent = 'Turn On';
+            btn.style.backgroundColor = 'var(--gray-700)';
+            status.textContent = 'Inactive';
+            status.style.color = 'var(--gray-500)';
+        }
+    }
+
+    window.toggleMainPump = async function() {
+        if(!window.dashboardIrrigationDevId) return;
+        const newState = !window.isDashPumpOn;
+        updatePumpUI(newState);
+        
+        const success = await iSurfAPI.triggerManualPump(window.dashboardIrrigationDevId, newState);
+        if(!success) {
+            alert('Failed to send command');
+            updatePumpUI(!newState); // revert
+        }
+    };
 
     // Initial load and interval
     updateDashboardMetrics();
-    setInterval(updateDashboardMetrics, 30000); // Update every 30s
+    initCharts();
+    loadDeviceHealth();
+    loadPumpStatus();
+    
+    setInterval(() => {
+        updateDashboardMetrics();
+        loadDeviceHealth();
+        loadPumpStatus();
+    }, 30000); // Update every 30s
 });
