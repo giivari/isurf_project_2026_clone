@@ -54,17 +54,20 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
-            const stats = await iSurfAPI.getDashboardStats();
+            const devices = await iSurfAPI.getDevices();
+            const onlineCount = devices.filter(d => d.status === 'online').length;
+            const totalCount = devices.length;
+            
             const nodesEl = document.getElementById('metric-nodes');
-            if(nodesEl) nodesEl.textContent = stats.online_devices;
+            if(nodesEl) nodesEl.textContent = onlineCount;
             
             const totalEl = document.getElementById('total-devices');
-            if(totalEl) totalEl.textContent = stats.total_devices;
+            if(totalEl) totalEl.textContent = totalCount;
             
             const lastUpdEl = document.getElementById('last-updated');
             if(lastUpdEl) lastUpdEl.textContent = iSurfAPI.formatTimeWithTZ(new Date());
         } catch (e) {
-            console.error("Failed to fetch dashboard stats", e);
+            console.error("Failed to fetch device stats", e);
         }
     }
 
