@@ -3,8 +3,6 @@
 
 $this->title = 'Dashboard';
 
-// API Configuration for frontend
-$this->registerJsVar('apiBaseUrl', 'http://localhost:8000/api');
 
 // Dashboard specific scripts
 $this->registerJsFile('@web/js/isurf-api.js', ['depends' => [\yii\web\JqueryAsset::class]]);
