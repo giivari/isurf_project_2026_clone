@@ -111,6 +111,10 @@ body {
  * Buttons
  * ------------------------------------- */
 .ds-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background-color: var(--primary-500);
   color: white;
   border-radius: var(--radius-sm);

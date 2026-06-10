@@ -19,6 +19,5 @@ class DeviceResponse(DeviceBase):
     last_heartbeat: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
-    sensors: List[SensorResponse] = []
 
     model_config = ConfigDict(from_attributes=True)

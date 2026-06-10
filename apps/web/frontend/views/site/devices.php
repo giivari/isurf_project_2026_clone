@@ -4,25 +4,25 @@ use yii\helpers\Html;
 $this->title = 'Device Management';
 ?>
 <div class="devices-page">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-6);">
+    <div style="display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between; align-items: flex-start; margin-bottom: var(--space-6);">
         <div>
             <h1 class="text-h2" style="margin-bottom: var(--space-2);">Device Management</h1>
             <p class="text-body text-gray-500">Kelola perangkat IoT, sensor, dan atur batas indikator (threshold) untuk otomatisasi lokal.</p>
         </div>
-        <button class="ds-btn-primary" onclick="alert('Fitur tambah device belum aktif')">
+        <button class="ds-btn-primary" style="white-space: nowrap;" onclick="openAddDeviceModal()">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             Tambah Device
         </button>
     </div>
 
-    <div style="background: white; border-radius: var(--radius-lg); box-shadow: var(--elevation-1); overflow: hidden;">
-        <table style="width: 100%; border-collapse: collapse;">
+    <div style="background: white; border-radius: var(--radius-lg); box-shadow: var(--elevation-1); overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
             <thead>
                 <tr style="background: var(--gray-50); border-bottom: 1px solid var(--gray-200); text-align: left;">
-                    <th style="padding: var(--space-4); color: var(--gray-500); font-size: 12px; font-weight: 600; text-transform: uppercase;">Device Info</th>
-                    <th style="padding: var(--space-4); color: var(--gray-500); font-size: 12px; font-weight: 600; text-transform: uppercase;">Status & Heartbeat</th>
-                    <th style="padding: var(--space-4); color: var(--gray-500); font-size: 12px; font-weight: 600; text-transform: uppercase;">Sensors</th>
-                    <th style="padding: var(--space-4); color: var(--gray-500); font-size: 12px; font-weight: 600; text-transform: uppercase; text-align: right;">Aksi</th>
+                    <th style="padding: var(--space-4); color: var(--gray-500); font-size: 12px; font-weight: 600; text-transform: uppercase; white-space: nowrap;">Device Info</th>
+                    <th style="padding: var(--space-4); color: var(--gray-500); font-size: 12px; font-weight: 600; text-transform: uppercase; white-space: nowrap;">Status & Heartbeat</th>
+                    <th style="padding: var(--space-4); color: var(--gray-500); font-size: 12px; font-weight: 600; text-transform: uppercase; white-space: nowrap;">Sensors</th>
+                    <th style="padding: var(--space-4); color: var(--gray-500); font-size: 12px; font-weight: 600; text-transform: uppercase; text-align: right; white-space: nowrap;">Aksi</th>
                 </tr>
             </thead>
             <tbody id="devicesTableBody">
@@ -51,6 +51,44 @@ $this->title = 'Device Management';
     </div>
 </div>
 
+<!-- Modal Add Device -->
+<div id="addDeviceModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: var(--space-4);">
+    <div style="background: white; border-radius: var(--radius-lg); width: 100%; max-width: 500px; display: flex; flex-direction: column; box-shadow: var(--elevation-3);">
+        <div style="padding: var(--space-5); border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="text-h3" style="margin: 0;">Tambah Perangkat Baru</h3>
+            <button onclick="closeAddDeviceModal()" style="background: none; border: none; cursor: pointer; color: var(--gray-400);">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div style="padding: var(--space-5);">
+            <div style="margin-bottom: 16px;">
+                <label class="text-caption font-medium" style="display: block; margin-bottom: 8px;">Nama Perangkat</label>
+                <input type="text" id="newDevName" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;" placeholder="cth: Nursery Monitor C">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label class="text-caption font-medium" style="display: block; margin-bottom: 8px;">Kode Perangkat (Device Code)</label>
+                <input type="text" id="newDevCode" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;" placeholder="cth: ESP32_NUR_03">
+                <small class="text-gray-500">Kode ini harus dimasukkan ke dalam config.h alat fisik.</small>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label class="text-caption font-medium" style="display: block; margin-bottom: 8px;">Tipe</label>
+                <select id="newDevType" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;">
+                    <option value="esp32_monitor">ESP32 Monitor (Hanya Sensor)</option>
+                    <option value="esp32_irrigation">ESP32 Controller (Sensor & Relay)</option>
+                </select>
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label class="text-caption font-medium" style="display: block; margin-bottom: 8px;">Lokasi</label>
+                <input type="text" id="newDevLocation" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;" placeholder="cth: Greenhouse C">
+            </div>
+        </div>
+        <div style="padding: var(--space-5); border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: var(--space-3);">
+            <button class="ds-btn-secondary" onclick="closeAddDeviceModal()">Batal</button>
+            <button class="ds-btn-primary" onclick="submitNewDevice()" id="submitDevBtn">Simpan Perangkat</button>
+        </div>
+    </div>
+</div>
+
 <script src="<?= Yii::getAlias('@web') ?>/js/isurf-api.js"></script>
 <script>
 let currentDevice = null;
@@ -73,7 +111,7 @@ async function loadDevices() {
             ? `<span class="ds-badge ds-badge-success">Online</span>` 
             : `<span class="ds-badge ds-badge-danger">Offline</span>`;
             
-        let hb = device.last_heartbeat ? new Date(device.last_heartbeat).toLocaleString('id-ID') : 'Never';
+        let hb = device.last_heartbeat ? iSurfAPI.formatDateTimeWithTZ(device.last_heartbeat) : 'Never';
         
         tr.innerHTML = `
             <td style="padding: var(--space-4);">
@@ -84,10 +122,10 @@ async function loadDevices() {
                 <div style="margin-bottom: 4px;">${statusBadge}</div>
                 <p style="font-size: 12px; color: var(--gray-500); margin: 0;">Last: ${hb}</p>
             </td>
-            <td style="padding: var(--space-4);">
+            <td style="padding: var(--space-4); white-space: nowrap;">
                 <span class="ds-badge ds-badge-info">${device.sensors ? device.sensors.length : 0} Sensors</span>
             </td>
-            <td style="padding: var(--space-4); text-align: right;">
+            <td style="padding: var(--space-4); text-align: right; white-space: nowrap;">
                 <button class="ds-btn-primary" style="padding: 6px 12px; font-size: 13px;" onclick="openModal(${device.id})">
                     Set Thresholds
                 </button>
@@ -177,6 +215,52 @@ async function saveThresholds() {
     } finally {
         btn.textContent = 'Simpan Konfigurasi';
         btn.disabled = false;
+    }
+}
+
+// Add Device Logic
+function openAddDeviceModal() {
+    document.getElementById('newDevName').value = '';
+    document.getElementById('newDevCode').value = '';
+    document.getElementById('newDevLocation').value = '';
+    document.getElementById('addDeviceModal').style.display = 'flex';
+}
+
+function closeAddDeviceModal() {
+    document.getElementById('addDeviceModal').style.display = 'none';
+}
+
+async function submitNewDevice() {
+    const name = document.getElementById('newDevName').value;
+    const code = document.getElementById('newDevCode').value;
+    const type = document.getElementById('newDevType').value;
+    const loc = document.getElementById('newDevLocation').value;
+
+    if (!name || !code) {
+        alert("Nama dan Kode Perangkat wajib diisi!");
+        return;
+    }
+
+    const btn = document.getElementById('submitDevBtn');
+    btn.disabled = true;
+    btn.innerHTML = 'Menyimpan...';
+
+    try {
+        await iSurfAPI.addDevice({
+            name: name,
+            device_code: code,
+            type: type,
+            location: loc
+        });
+        
+        closeAddDeviceModal();
+        alert("Perangkat berhasil ditambahkan! Silakan pasang kode alat di config.h Arduino Anda.");
+        loadDevices(); // Reload table
+    } catch (err) {
+        alert("Gagal menambahkan: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Simpan Perangkat';
     }
 }
 

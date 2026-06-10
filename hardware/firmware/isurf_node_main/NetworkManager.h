@@ -20,6 +20,7 @@ public:
     // HTTP API Calls
     bool sendData(String jsonPayload);
     bool syncConfig(ActuatorManager* actuatorManager);
+    bool syncActuatorState(ActuatorManager* actuatorManager);
 };
 
 #endif // NETWORK_MANAGER_H

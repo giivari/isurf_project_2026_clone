@@ -140,6 +140,49 @@ bool NetworkManager::syncConfig(ActuatorManager* actuatorManager) {
     return false;
 }
 
+bool NetworkManager::syncActuatorState(ActuatorManager* actuatorManager) {
+    if (!connected) return false;
+    
+    // 1. Establish TCP Connection
+    String cmd = "AT+CIPSTART=\"TCP\",\"";
+    cmd += SERVER_IP;
+    cmd += "\",";
+    cmd += SERVER_PORT;
+    
+    if(!sendCommand(cmd, "CONNECT", 5000)) {
+        return false;
+    }
+    
+    // 2. Build HTTP GET Request
+    String url = "/api/irrigation/state/" + String(DEVICE_CODE);
+    String httpRequest = "GET " + url + " HTTP/1.1\r\n";
+    httpRequest += "Host: " + String(SERVER_IP) + ":" + String(SERVER_PORT) + "\r\n";
+    httpRequest += "Connection: close\r\n\r\n";
+    
+    // 3. Send Data Length
+    cmd = "AT+CIPSEND=" + String(httpRequest.length());
+    if(!sendCommand(cmd, ">", 3000)) {
+        return false;
+    }
+    
+    // 4. Send actual request
+    ESP_SERIAL.print(httpRequest);
+    
+    // 5. Read response
+    String response = readEspResponse(5000);
+    
+    // 6. Simple string search for MVP: {"pump":true} or {"pump":false}
+    if (response.indexOf("\"pump\":true") > 0 || response.indexOf("\"pump\": true") > 0) {
+        actuatorManager->setPumpState(true);
+        Serial.println("Network State: PUMP ON");
+    } else if (response.indexOf("\"pump\":false") > 0 || response.indexOf("\"pump\": false") > 0) {
+        actuatorManager->setPumpState(false);
+        Serial.println("Network State: PUMP OFF");
+    }
+    
+    return true;
+}
+
 String NetworkManager::readEspResponse(uint32_t timeout) {
     String response = "";
     long int time = millis();

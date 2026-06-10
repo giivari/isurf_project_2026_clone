@@ -17,7 +17,7 @@ AppAsset::register($this);
     <meta charset="<?= Yii::$app->charset ?>">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <?php $this->registerCsrfMetaTags() ?>
-    <title><?= Html::encode($this->title) ?> - iSURF</title>
+    <title><?= Html::encode($this->title) ?> - iSurf Lab IPB</title>
     
     <!-- Design System CSS -->
     <link href="<?= Url::to('@web/css/design-system.css') ?>" rel="stylesheet">
@@ -54,8 +54,8 @@ AppAsset::register($this);
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
         </div>
         <div>
-            <h1 style="font-size: 18px; font-weight: 700; color: var(--gray-900); line-height: 1.2; margin: 0;">iSURF</h1>
-            <p style="font-size: 12px; color: var(--gray-500); margin: 0;">Monitoring Platform</p>
+            <h1 style="font-size: 18px; font-weight: 700; color: var(--gray-900); line-height: 1.2; margin: 0;">iSurf Lab</h1>
+            <p style="font-size: 12px; color: var(--gray-500); margin: 0;">Smart Urban Farming IPB</p>
         </div>
         <button id="close-sidebar" class="md:hidden text-gray-400 hover:text-gray-900 ml-auto" aria-label="Close sidebar">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
@@ -103,6 +103,11 @@ AppAsset::register($this);
             Alerts & Logs
             <?php if (Yii::$app->controller->action->id == 'alerts'): ?><svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg><?php endif; ?>
         </a>
+        <a href="<?= Url::to(['site/devices']) ?>" class="ds-sidebar-item <?= Yii::$app->controller->action->id == 'devices' ? 'active' : '' ?>">
+            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path></svg>
+            Device Management
+            <?php if (Yii::$app->controller->action->id == 'devices'): ?><svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg><?php endif; ?>
+        </a>
         <a href="<?= Url::to(['site/manage-requests']) ?>" class="ds-sidebar-item <?= Yii::$app->controller->action->id == 'manage-requests' ? 'active' : '' ?>">
             <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
             Manage Requests
@@ -147,7 +152,7 @@ AppAsset::register($this);
         <div class="flex items-center gap-6">
             <div class="hidden sm:flex items-center gap-2 text-gray-500">
                 <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                <span style="font-size: 14px;" id="header-time"><?= date('H:i:s') ?> - <?= date('d/m/Y') ?></span>
+                <span style="font-size: 14px;" id="header-time"><?= date('H:i:s') ?> - <?= date('d/m/Y') ?> (UTC<?= date('P') ?>)</span>
             </div>
             <div class="hidden sm:flex items-center gap-2 text-gray-500">
                 <svg class="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path></svg>
@@ -181,8 +186,8 @@ AppAsset::register($this);
             <?= $content ?>
         </div>
         
-        <footer class="mt-12 pt-6 pb-2 text-center text-caption" style="border-top: 1px solid var(--gray-200); color: var(--gray-400);">
-            <p style="margin: 0;">&copy; <?= Html::encode(Yii::$app->name) ?> <?= date('Y') ?>. All rights reserved.</p>
+        <footer class="mt-12 pt-6 pb-4 text-center text-caption" style="border-top: 1px solid var(--gray-200); color: var(--gray-500);">
+            <p style="margin: 0; font-weight: 500;">&copy; <?= date('Y') ?> Ilmu Komputer SSMI IPB.</p>
         </footer>
     </main>
 </div>
@@ -198,7 +203,15 @@ AppAsset::register($this);
         const d = String(now.getDate()).padStart(2, '0');
         const mo = String(now.getMonth()+1).padStart(2, '0');
         const y = now.getFullYear();
-        if(timeEl) timeEl.textContent = `${h}:${m}:${s} - ${d}/${mo}/${y}`;
+        
+        // Calculate UTC offset
+        const offset = -now.getTimezoneOffset();
+        const sign = offset >= 0 ? '+' : '-';
+        const offsetHours = String(Math.floor(Math.abs(offset) / 60)).padStart(2, '0');
+        const offsetMins = String(Math.abs(offset) % 60).padStart(2, '0');
+        const tz = `UTC${sign}${offsetHours}:${offsetMins}`;
+        
+        if(timeEl) timeEl.textContent = `${h}:${m}:${s} - ${d}/${mo}/${y} (${tz})`;
     }
     setInterval(updateClock, 1000);
 

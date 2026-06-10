@@ -45,7 +45,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+        try {
+            const stats = await iSurfAPI.getDashboardStats();
+            
+            // Update basic counts
+            document.getElementById('total-devices').textContent = stats.total_devices;
+            document.getElementById('active-sensors').textContent = stats.active_sensors;
+            document.getElementById('online-status').textContent = `${stats.online_devices} Online`;
+            document.getElementById('last-updated').textContent = iSurfAPI.formatTimeWithTZ(new Date());
+        } catch (e) {
+            console.error("Failed to fetch dashboard stats", e);
+        }
     }
 
     // --- 2. Chart.js Initialization ---

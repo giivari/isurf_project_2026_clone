@@ -13,7 +13,8 @@ SDManager       sdManager;
 // Timing variables
 unsigned long lastSensorRead = 0;
 unsigned long lastDataSend   = 0;
-unsigned long lastConfigSync = 0;
+unsigned long lastStateSync  = 0;
+const unsigned long STATE_SYNC_INTERVAL = 30000; // Poll server every 30s for pump state
 
 void setup() {
   Serial.begin(115200);
@@ -43,7 +44,10 @@ void loop() {
     // Read sensors
     sensorManager.readAllSensors();
     
-    // Evaluate thresholds & control actuators
+    // Evaluate thresholds (Fallbacks in case server connection is lost)
+    // actuatorManager.evaluate() is overridden by Network state if connected.
+    // For this implementation, we will keep evaluate() for Fan control 
+    // and let syncActuatorState() handle the Pump.
     actuatorManager.evaluate(
       sensorManager.getTdsValue(),
       sensorManager.getPhValue(),
@@ -75,5 +79,11 @@ void loop() {
   if (currentMillis - lastConfigSync >= CONFIG_SYNC_INTERVAL) {
     lastConfigSync = currentMillis;
     networkManager.syncConfig(&actuatorManager);
+  }
+  
+  // 4. PERIODIC ACTUATOR STATE SYNC (Fast Polling)
+  if (currentMillis - lastStateSync >= STATE_SYNC_INTERVAL) {
+    lastStateSync = currentMillis;
+    networkManager.syncActuatorState(&actuatorManager);
   }
 }

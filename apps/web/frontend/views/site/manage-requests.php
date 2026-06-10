@@ -144,7 +144,7 @@ function renderTable(data) {
 
         html += `
         <tr style="border-bottom: 1px solid var(--gray-100);">
-            <td style="padding: 16px;">${new Date(req.created_at).toLocaleDateString()}</td>
+            <td style="padding: 16px;">${iSurfAPI.formatDateTimeWithTZ(req.created_at)}</td>
             <td style="padding: 16px;">
                 <p class="font-medium" style="margin: 0;">${req.full_name}</p>
                 <p class="text-caption text-gray-500" style="margin: 0;">${req.nim_nip}</p>

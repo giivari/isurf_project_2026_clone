@@ -62,3 +62,17 @@ void ActuatorManager::evaluate(float currentTds, float currentPh, float currentT
 
 bool ActuatorManager::isPumpOn() { return pumpState; }
 bool ActuatorManager::isFanOn() { return fanState; }
+
+void ActuatorManager::setPumpState(bool state) {
+    if (pumpState != state) {
+        pumpState = state;
+        digitalWrite(PIN_RELAY_PUMP, state ? LOW : HIGH); // Assuming active-low relay
+    }
+}
+
+void ActuatorManager::setFanState(bool state) {
+    if (fanState != state) {
+        fanState = state;
+        digitalWrite(PIN_RELAY_FAN, state ? LOW : HIGH); // Assuming active-low relay
+    }
+}

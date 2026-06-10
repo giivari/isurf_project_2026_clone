@@ -119,6 +119,16 @@ class SiteController extends Controller
     }
 
     /**
+     * Displays devices management page.
+     *
+     * @return mixed
+     */
+    public function actionDevices()
+    {
+        return $this->render('devices');
+    }
+
+    /**
      * Displays alerts & logs page.
      *
      * @return mixed

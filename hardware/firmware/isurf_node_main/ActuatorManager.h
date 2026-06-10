@@ -26,6 +26,10 @@ public:
     
     bool isPumpOn();
     bool isFanOn();
+    
+    // Explicit setters for network commands
+    void setPumpState(bool state);
+    void setFanState(bool state);
 };
 
 #endif // ACTUATOR_MANAGER_H
