@@ -5,9 +5,9 @@ $this->title = 'Dashboard';
 
 
 // Dashboard specific scripts
-$this->registerJsFile('@web/js/isurf-api.js', ['depends' => [\yii\web\JqueryAsset::class]]);
+$this->registerJsFile('@web/js/isurf-api.js?v=1.1', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js', ['depends' => [\yii\web\JqueryAsset::class]]);
-$this->registerJsFile('@web/js/dashboard.js', ['depends' => [\yii\web\JqueryAsset::class]]);
+$this->registerJsFile('@web/js/dashboard.js?v=' . time(), ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
 <script>
     window.appBaseUrl = '<?= yii\helpers\Url::to('@web') ?>';
@@ -256,6 +256,32 @@ $this->registerJsFile('@web/js/dashboard.js', ['depends' => [\yii\web\JqueryAsse
     }
     div[style*="grid-template-columns: 1fr"] {
         grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+.plant-group-card {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    overflow: hidden;
+    padding: 0;
+}
+.plant-group-img {
+    width: 100%;
+    min-height: 150px;
+    background-size: cover;
+    background-position: center;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+@media (min-width: 768px) {
+    .plant-group-card {
+        flex-direction: row;
+    }
+    .plant-group-img {
+        width: 250px;
+        min-height: auto;
+        border-radius: var(--radius-md) 0 0 var(--radius-md);
     }
 }
 </style>

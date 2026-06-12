@@ -182,8 +182,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(plantType.toLowerCase() === 'kangkung') imgName = 'plants/kangkung.jpg';
                 
                 const groupCard = document.createElement('div');
-                groupCard.className = 'glass-card';
-                groupCard.style.cssText = 'display: flex; flex-direction: column; md:flex-direction: row; gap: var(--space-4); overflow: hidden; padding: 0;';
+                groupCard.className = 'glass-card plant-group-card';
                 
                 let devHtml = '';
                 devs.forEach(d => {
@@ -207,7 +206,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 
                 groupCard.innerHTML = `
-                    <div style="width: 100%; min-height: 150px; background-image: url('${window.appBaseUrl || ''}/images/${imgName}'); background-size: cover; background-position: center; border-radius: var(--radius-md) var(--radius-md) 0 0; @media(min-width: 768px){ width: 250px; min-height: auto; border-radius: var(--radius-md) 0 0 var(--radius-md); }"></div>
+                    <div class="plant-group-img" style="background-image: url('${window.appBaseUrl || ''}/images/${imgName}');"></div>
                     <div style="flex: 1; padding: var(--space-5);">
                         <h4 class="text-h4" style="margin-top: 0; margin-bottom: var(--space-4); color: var(--gray-900);">Tanaman ${plantType}</h4>
                         ${devHtml}
