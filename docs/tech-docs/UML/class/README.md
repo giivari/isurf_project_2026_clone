@@ -3,7 +3,6 @@
 Dokumen ini merinci struktur kelas internal sistem, menampilkan relasi utuh antar entitas di tingkat basis data (SQLAlchemy Models) dan penjelasan untuk masing-masing kelas.
 
 ## 1. Domain Model (SQLAlchemy Entities)
-Berikut adalah relasi antar model inti dalam sistem iSURF secara komprehensif:
 
 ```mermaid
 classDiagram
@@ -12,93 +11,104 @@ classDiagram
         +string username
         +string email
         +string password_hash
-        +string role
+        +string auth_key
         +int status
         +string full_name
+        +string role
         +string avatar_url
-        +datetime last_login_at
-        +bool authenticate(string password)
-        +void updateProfile(dict data)
-        +void reviewRequest(int req_id, string action)
     }
 
-    class Device {
+    class Area {
         +int id
-        +string device_code
         +string name
-        +string type
-        +string location
-        +string status
-        +datetime last_heartbeat
-        +string firmware_version
-        +void register()
-        +void updateHeartbeat()
-        +list~Sensor~ getSensors()
-        +void triggerManualIrrigation()
+        +string plant
+        +string description
+        +datetime created_at
+        +datetime updated_at
     }
 
     class Sensor {
-        +int id
-        +int device_id
+        +string id
         +string name
-        +string sensor_type
-        +string unit
+        +string data_type
         +float min_threshold
         +float max_threshold
-        +boolean is_active
-        +void updateThresholds(float min, float max)
-        +void recordReading(float val)
-        +void checkAlert(float val)
+        +boolean is_online
+        +int area_id
+        +datetime created_at
+        +datetime updated_at
     }
 
-    class SensorReading {
+    class Actuator {
+        +string id
+        +string name
+        +float flow_rate_per_sec
+        +string valve_status
+        +boolean is_auto_enabled
+        +int area_id
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    class SensorLog {
         +bigint id
-        +int sensor_id
-        +int device_id
-        +float value
-        +datetime recorded_at
-        +void save()
+        +date date
+        +time time
+        +float reading
+        +boolean anomalies
+        +string status
+        +string sensor_id
+    }
+
+    class AreaAggregation {
+        +bigint id
+        +date date
+        +time time
+        +string data_type
+        +float min_value
+        +float max_value
+        +float avg_value
+        +int area_id
     }
 
     class Alert {
         +bigint id
-        +int device_id
-        +int sensor_id
+        +string sensor_id
         +string alert_type
         +string message
         +float value
         +float threshold_exceeded
         +boolean is_read
+        +datetime created_at
         +datetime resolved_at
-        +void markAsRead()
-        +void resolve()
     }
 
-    class IrrigationSchedule {
+    class AreaConditionRule {
         +int id
-        +int device_id
-        +string name
-        +time start_time
-        +int duration_minutes
-        +string days_of_week
-        +boolean is_active
-        +void activate()
-        +void deactivate()
-        +bool checkIfDue()
+        +string data_type
+        +string operator
+        +float value
+        +string action
+        +int area_id
+        +datetime created_at
+        +datetime updated_at
     }
 
-    class IrrigationLog {
+    class AreaScheduleRule {
+        +int id
+        +time time
+        +string action
+        +int area_id
+        +datetime created_at
+        +datetime updated_at
+    }
+
+    class WaterUsageLog {
         +bigint id
-        +int schedule_id
-        +int device_id
-        +string trigger_type
-        +datetime started_at
-        +datetime ended_at
-        +string status
-        +float water_volume_liters
-        +void start()
-        +void complete(float volume)
-        +void fail()
+        +datetime timestamp
+        +float water_discharged
+        +float water_remaining
+        +string actuator_id
     }
 
     class DataRequest {
@@ -107,27 +117,32 @@ classDiagram
         +string full_name
         +string email
         +string nim_nip
+        +string reason
+        +string document_path
         +string data_type
+        +json requested_sensors
+        +date date_start
+        +date date_end
         +string status
+        +string admin_notes
+        +string download_token
+        +datetime created_at
+        +datetime reviewed_at
         +int reviewed_by
-        +void submit()
-        +void approve(int admin_id)
-        +void reject(int admin_id)
-        +string generateDownloadToken()
     }
 
     %% Relationships
-    Device "1" -- "*" Sensor : has
-    Device "1" -- "*" SensorReading : records
-    Sensor "1" -- "*" SensorReading : generates
-    
-    Device "1" -- "*" Alert : triggers
-    Sensor "1" -- "0..1" Alert : associated_with
-    
-    Device "1" -- "*" IrrigationSchedule : has
-    IrrigationSchedule "1" -- "*" IrrigationLog : executes
-    Device "1" -- "*" IrrigationLog : logs
-    
+    Area "1" -- "*" Sensor : groups
+    Area "1" -- "*" Actuator : groups
+    Area "1" -- "*" AreaAggregation : aggregates
+    Area "1" -- "*" AreaConditionRule : schedules
+    Area "1" -- "*" AreaScheduleRule : schedules
+
+    Sensor "1" -- "*" SensorLog : generates
+    Sensor "1" -- "*" Alert : triggers
+
+    Actuator "1" -- "*" WaterUsageLog : logs
+
     User "1" -- "*" DataRequest : reviews
 ```
 
@@ -137,63 +152,70 @@ classDiagram
 Berikut adalah penjelasan fungsionalitas dari setiap kelas utama di atas:
 
 ### **`User`**
-Merepresentasikan entitas pengguna dalam sistem, mencakup administrator maupun peneliti. Mengelola kredensial otentikasi (username, password hash) dan informasi profil dasar. Aktor dengan *role* admin berwenang meninjau permintaan data.
+Merepresentasikan entitas pengguna dalam sistem (seperti Administrator, Operator, dan Viewer). Mengelola kredensial otentikasi (username, password hash) dan status akun.
 
-### **`Device`**
-Merepresentasikan perangkat keras IoT (seperti Node ESP32) yang terpasang di lapangan. Kelas ini melacak identitas perangkat (`device_code`), lokasi, status online/offline (`last_heartbeat`), dan versi firmware. Merupakan entitas induk (parent) bagi sensor dan jadwal penyiraman.
+### **`Area`**
+Merepresentasikan wilayah atau sektor lahan pertanian urban pintar (misalnya "Greenhouse A", "Nursery B"). Kelas ini melacak jenis komoditas tanaman (`plant`) yang ditanam dan deskripsinya. Menjadi wadah pengelompokan bagi sensor dan aktuator.
 
 ### **`Sensor`**
-Mendefinisikan modul sensor spesifik (misal: sensor pH, TDS, atau kelembapan tanah) yang terhubung ke sebuah `Device`. Kelas ini menyimpan nilai referensi seperti `min_threshold` dan `max_threshold` yang digunakan untuk memicu peringatan jika nilai pembacaan melebihi batas aman.
+Mendefinisikan modul sensor fisik (seperti sensor kelembaban tanah, suhu udara, pH, TDS) yang terpasang di wilayah (`Area`) tertentu. Kelas ini menyimpan ambang batas nilai batas atas (`max_threshold`) dan batas bawah (`min_threshold`) untuk memantau keselamatan kondisi tanaman.
 
-### **`SensorReading`**
-Merupakan log data time-series (telemetry) hasil pembacaan dari `Sensor` fisik pada waktu tertentu. Sangat penting untuk fitur *monitoring* dan *analytics*. Terhubung langsung dengan `Sensor` dan `Device`.
+### **`Actuator`**
+Mendefinisikan modul aktuator/alat kontrol keluaran fisik (seperti pompa air elektrik, selenoid valve, kipas) yang terpasang pada suatu wilayah (`Area`). Melacak kapasitas aliran air per detik (`flow_rate_per_sec`) dan status katup (`valve_status`).
+
+### **`SensorLog`**
+Catatan riwayat data telemetry mentah yang dikirim oleh perangkat IoT untuk sensor tertentu. Menyimpan tanggal (`date`), waktu (`time`), nilai pembacaan (`reading`), penanda anomali (`anomalies`), dan status keselamatan pembacaan.
+
+### **`AreaAggregation`**
+Menyimpan rangkuman agregasi statistik (nilai minimum, maksimum, dan rata-rata) per wilayah (`Area`) berdasarkan tipe data tertentu untuk kebutuhan visualisasi grafik analitik yang cepat.
 
 ### **`Alert`**
-Entitas yang dibuat secara otomatis (atau manual) ketika anomali terdeteksi, misalnya ketika nilai `SensorReading` keluar dari batas `min_threshold` atau `max_threshold` sensor terkait. Berguna untuk memberikan peringatan dini kepada staf di lapangan.
+Mencatat kejadian anomali saat nilai sensor keluar dari batas aman yang telah diatur pada `Sensor`. Memuat tingkat keparahan (*alert type*), pesan peringatan, nilai pemicu, dan status penanganan alert.
 
-### **`IrrigationSchedule`**
-Mendefinisikan jadwal rutin otomatis untuk proses penyiraman di suatu `Device`. Mengatur jam mulai (`start_time`), durasi (`duration_minutes`), dan hari-hari aktif (`days_of_week`).
+### **`AreaConditionRule` & `AreaScheduleRule`**
+Merupakan aturan logika otomasi penyiraman dan kontrol aktuator. `AreaConditionRule` memicu aksi aktuator berdasarkan kondisi sensor (misalnya: jika Soil Moisture < 40% maka nyalakan pompa). `AreaScheduleRule` memicu aksi berdasarkan waktu terjadwal (misalnya: nyalakan pompa setiap jam 06:00).
 
-### **`IrrigationLog`**
-Catatan riwayat penyiraman yang telah terjadi. Melacak apakah penyiraman dipicu secara manual, berdasarkan jadwal (`schedule_id`), atau dipicu otomatis oleh sensor. Mengabadikan waktu mulai, waktu selesai, dan status keberhasilan penyiraman.
+### **`WaterUsageLog`**
+Catatan penggunaan air historis dari aktifnya aktuator penyiraman. Melacak jumlah air yang dikeluarkan (`water_discharged`) dan sisa ketersediaan air pada tangki penyiraman (`water_remaining`).
 
 ### **`DataRequest`**
-Menampung formulir permintaan dataset historis yang diajukan oleh pengguna/peneliti. Mengandung informasi pemohon dan status persetujuan yang direview oleh `User` (Admin).
+Formulir permohonan dataset historis yang diajukan oleh pengguna/peneliti eksternal. Melacak masa waktu data yang diminta, alasan pengajuan, file dokumen pdf bukti akademis, status persetujuan, dan token unduh data yang diulas oleh `User` (Admin).
 
 ---
 
 ## 3. API Data Transfer Objects (Pydantic Schemas)
-Selain kelas-kelas basis data di atas, sistem menggunakan pola DTO (Data Transfer Object) via Pydantic untuk memisahkan representasi database dengan payload API. Contoh untuk entitas **Device**:
+Sistem menggunakan pola DTO (Data Transfer Object) via Pydantic untuk validasi data masukan API dan format keluaran respons JSON. Contoh representasi DTO untuk entitas **Sensor**:
 
 ```mermaid
 classDiagram
-    class DeviceBase {
-        +string device_code
+    class SensorCreate {
+        +string id
         +string name
-        +string type
-        +string location
+        +string data_type
+        +float min_threshold
+        +float max_threshold
+        +boolean is_online
+        +int area_id
     }
 
-    class DeviceCreate {
-        +string device_code
+    class SensorResponse {
+        +string id
         +string name
-    }
-
-    class DeviceResponse {
-        +int id
-        +string status
+        +string data_type
+        +float min_threshold
+        +float max_threshold
+        +boolean is_online
+        +int area_id
         +datetime created_at
+        +datetime updated_at
     }
-
-    DeviceBase <|-- DeviceCreate
-    DeviceBase <|-- DeviceResponse
 ```
 
 ---
 
 ## 4. Integrasi Router & Model
-Setiap router di `apps/api/app/routers/` berinteraksi dengan **Models** melalui **Schemas** sebagai jembatan:
+Setiap router di `apps/api/app/routers/` berinteraksi dengan **Models** melalui **Schemas/BaseModels** lokal atau global sebagai jembatan:
 
-1.  **Request:** User mengirim JSON → Validasi via `SchemaCreate`.
-2.  **Logic:** Data diproses dan disimpan menggunakan SQLAlchemy `Model`.
-3.  **Response:** Data dikembalikan ke user dikonversi via `SchemaResponse` (menggunakan `from_attributes=True`).
+1.  **Request:** Payload JSON divalidasi secara otomatis menggunakan subclass Pydantic `BaseModel` (misal: `SensorCreate`).
+2.  **Logic:** Data diproses dan disimpan menggunakan SQLAlchemy `Model` (anemic model) melalui session database `db`.
+3.  **Response:** Objek data SQLAlchemy dikonversi menjadi skema respons JSON (misal: `SensorResponse`) yang dikembalikan ke pemanggil.
