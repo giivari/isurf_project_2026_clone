@@ -3,7 +3,7 @@
 Dokumen ini mendefinisikan interaksi antara aktor luar dengan fungsionalitas sistem **iSURF (Integrated Smart Urban Farming)**.
 
 ## 1. Diagram Use Case Utama
-
+Berikut adalah visualisasi use case sistem menggunakan sintaks Mermaid dengan urutan yang dioptimalkan untuk meminimalkan tumpang tindih garis, diselaraskan dengan pendekatan *Area-Centric*:
 
 ```mermaid
 %%{init: {'flowchart': {'curve': 'linear'}}}%%
@@ -13,31 +13,31 @@ flowchart LR
     Admin((Administrator))
     Worker((Field Worker))
     User((Researcher / User))
-    IoT((IoT Device ESP32))
+    IoT((IoT Device / Sensor Node))
 
     subgraph Platform [iSURF Platform]
         direction TB
         UC01([UC01: Login & Auth])
-        UC02([UC02: Monitoring Real-time Data])
-        UC06([UC06: Manual Trigger Irrigation])
-        UC03([UC03: Register & Manage Device])
-        UC05([UC05: Manage Irrigation Schedule])
-        UC10([UC10: Review Dataset Request])
+        UC02([UC02: Monitoring Real-time Area Data])
+        UC03([UC03: Manage Areas, Sensors & Actuators])
         UC04([UC04: Configure Sensor Thresholds])
-        UC09([UC09: Request Dataset])
-        UC11([UC11: Download Dataset])
+        UC05([UC05: Configure Automation Rules])
+        UC06([UC06: Manual Trigger Actuator])
         UC07([UC07: Ingest Sensor Data])
-        UC08([UC08: Send Heartbeat])
+        UC08([UC08: Update Online Status])
+        UC09([UC09: Request Dataset])
+        UC10([UC10: Review Dataset Request])
+        UC11([UC11: Download Dataset])
     end
 
     %% Admin Connections (Top & Middle)
     Admin --- UC01
     Admin --- UC02
-    Admin --- UC06
     Admin --- UC03
-    Admin --- UC05
-    Admin --- UC10
     Admin --- UC04
+    Admin --- UC05
+    Admin --- UC06
+    Admin --- UC10
 
     %% Field Worker Connections (Top)
     UC01 --- Worker
@@ -61,31 +61,31 @@ flowchart LR
 ## 2. Definisi Aktor
 | Aktor | Deskripsi |
 | :--- | :--- |
-| **Administrator** | Memiliki akses penuh untuk mengelola pengguna, perangkat IoT, dan melakukan audit terhadap permintaan data. |
-| **Researcher / User** | Pengguna yang fokus pada konsumsi data untuk penelitian atau pemantauan umum. |
-| **Field Worker** | Personel di lapangan yang memantau sistem melalui aplikasi mobile dan melakukan tindakan manual jika diperlukan. |
-| **IoT Device** | Perangkat keras (ESP32) yang berinteraksi dengan API for mengirim data telemetri. |
+| **Administrator** | Memiliki akses penuh untuk mengelola pengguna, area pertanian, sensor, aktuator, serta meninjau permohonan akses data. |
+| **Researcher / User** | Pengguna yang fokus pada konsumsi data historis untuk kebutuhan riset, serta pemantauan umum. |
+| **Field Worker** | Personel lapangan yang memantau kondisi sensor secara mobile dan dapat melakukan override manual aktuator (pompa). |
+| **IoT Device / Sensor Node** | Mikrokontroler lapangan (seperti ESP32) yang mengirimkan data telemetry dan memantau kondisi *online/offline*. |
 
 ---
 
 ## 3. Daftar Use Case
-Dokumentasi detail (Sequence & Activity Diagram) akan dipisahkan per Use Case:
+Dokumentasi detail (Sequence & Activity Diagram) dipisahkan per Use Case:
 
 ### Group A: Authentication & User Management
-- **UC01: Login & Authentication:** Proses masuk ke sistem menggunakan username dan password untuk mendapatkan akses via Web/Mobile.
+- **UC01: Login & Authentication:** Proses masuk ke sistem menggunakan username dan password untuk mendapat token akses.
 
-### Group B: Device & Monitoring
-- **UC02: Monitoring Real-time Data:** Melihat data sensor (pH, TDS, Temp, dll) secara langsung melalui dashboard.
-- **UC07: Ingest Sensor Data:** Proses otomatis perangkat IoT mengirimkan pembacaan sensor ke server.
-- **UC08: Send Heartbeat:** Perangkat IoT melaporkan status aktif secara periodik.
+### Group B: Area & Monitoring
+- **UC02: Monitoring Real-time Area Data:** Memantau telemetry sensor (kelembaban tanah, suhu udara, pH, TDS) berdasarkan area pertanian.
+- **UC07: Ingest Sensor Data:** Proses pengiriman otomatis dari IoT Device ke endpoint `/ingest` API backend.
+- **UC08: Update Online Status:** Perubahan status aktif sensor (`is_online`) berdasarkan *heartbeat* aktivitas pengiriman data terakhir.
 
 ### Group C: Control & Configuration
-- **UC03: Register & Manage Device:** Menambahkan perangkat baru ke sistem (oleh Admin).
-- **UC04: Configure Sensor Thresholds:** Mengatur batas aman nilai sensor untuk memicu peringatan otomatis.
-- **UC05: Manage Irrigation Schedule:** Penjadwalan penyiraman otomatis berdasarkan waktu.
-- **UC06: Manual Trigger Irrigation:** Menyalakan pompa/actuator secara langsung dari aplikasi.
+- **UC03: Manage Areas, Sensors & Actuators:** Penambahan, pembaruan, dan penghapusan wilayah (Area) serta sensor dan aktuator yang terikat padanya.
+- **UC04: Configure Sensor Thresholds:** Pengaturan ambang batas atas dan batas bawah pembacaan sensor untuk trigger alert anomali.
+- **UC05: Configure Automation Rules:** Pengaturan otomasi pompa/aktuator berdasarkan jadwal harian (`AreaScheduleRule`) atau pembacaan kondisi sensor (`AreaConditionRule`).
+- **UC06: Manual Trigger Actuator:** Melakukan override paksa status aktuator (pompa 'ON' atau 'OFF') melalui perintah API/Dashboard.
 
 ### Group D: Research Data Access
-- **UC09: Request Dataset:** Mengajukan permohonan data historis dalam rentang waktu tertentu.
-- **UC10: Review Dataset Request:** Validasi permohonan data oleh Administrator.
-- **UC11: Download Dataset:** Mengunduh file data yang telah disetujui (CSV/JSON).
+- **UC09: Request Dataset:** Mengajukan formulir permohonan unduh dataset telemetry historis dengan menyertakan berkas pdf proposal/izin.
+- **UC10: Review Dataset Request:** Validasi permohonan data oleh Administrator (Approved/Rejected).
+- **UC11: Download Dataset:** Melakukan unduh berkas data ekspor dalam format CSV/JSON setelah mendapat token unduh yang disetujui.
