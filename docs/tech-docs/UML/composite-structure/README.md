@@ -1,4 +1,4 @@
-# Dokumentasi Pengembangan Digitalisasi Ternak
+# Composite Structure Diagram - iSURF Project
 
 > 
 > Dibuat oleh:  
@@ -8,7 +8,7 @@
 > * Institut Pertanian Bogor (IPB)  
 > 
 > Tanggal dibuat: Jum'at, 01 Februari 2024  
-> Tanggal diperbarui: Rabu, 23 April 2025  
+> Tanggal diperbarui: Jum'at, 19 Juni 2026  
 > Versi: 3.0 - Revisi: 2
 > 
 

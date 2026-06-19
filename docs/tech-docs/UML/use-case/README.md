@@ -3,7 +3,7 @@
 Dokumen ini mendefinisikan interaksi antara aktor luar dengan fungsionalitas sistem **iSURF (Integrated Smart Urban Farming)**.
 
 ## 1. Diagram Use Case Utama
-Berikut adalah visualisasi use case sistem menggunakan sintaks Mermaid dengan urutan yang dioptimalkan untuk meminimalkan tumpang tindih garis:
+
 
 ```mermaid
 %%{init: {'flowchart': {'curve': 'linear'}}}%%
