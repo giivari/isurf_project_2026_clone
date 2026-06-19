@@ -4,7 +4,6 @@
 Dokumen ini memberikan gambaran umum tentang arsitektur sistem **iSURF (Integrated Smart Urban Farming)**. Sistem ini dirancang untuk mengintegrasikan pemantauan IoT, manajemen data melalui web, dan akses mobilitas bagi pengguna lapangan.
 
 ## 2. Diagram Arsitektur Tingkat Tinggi
-Berikut adalah gambaran interaksi antar komponen utama dalam sistem iSURF:
 
 ```mermaid
 graph TD
@@ -38,13 +37,13 @@ Pusat logika bisnis dan orkestrasi data. Dibangun menggunakan **FastAPI** dengan
 - **Tanggung Jawab:** Manajemen user (RBAC), pengolahan data ternak/tanaman, dan penyediaan endpoint RESTful untuk Web dan Mobile.
 - **Database:** MySQL/MariaDB sebagai penyimpanan utama.
 
-### 3.2 Web ERP Dashboard (`apps/web`)
+### 3.2 Web Dashboard (`apps/web`)
 Antarmuka manajemen utama untuk administrator dan staf internal. Menggunakan **Yii2 Advanced Template**.
 - **Tanggung Jawab:** Visualisasi data real-time, manajemen inventory, pelaporan, dan pengaturan sistem (RBAC).
 
 ### 3.3 Mobile Application (`apps/mobile`)
-Aplikasi berbasis **Flutter** untuk kebutuhan operasional di lapangan.
-- **Tanggung Jawab:** Input data lapangan, notifikasi real-time, dan pemantauan kondisi sensor secara mobile.
+Aplikasi berbasis **Flutter** untuk akses via mobile.
+- **Tanggung Jawab:**  notifikasi real-time, dan pemantauan kondisi sensor secara mobile.
 
 ### 3.4 IoT & Monitoring (`apps/iot`)
 Komponen perangkat keras dan API lokal untuk pengumpulan data sensor.
