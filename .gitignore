@@ -1,0 +1,4 @@
+# Graphify outputs
+graphify-out/
+.graphify*/
+.agents/
