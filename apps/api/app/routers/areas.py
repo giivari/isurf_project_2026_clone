@@ -30,6 +30,30 @@ def create_area(area: AreaCreate, db: Session = Depends(get_db), user: dict = De
     db.refresh(db_area)
     return db_area
 
+@router.put("/{area_id}", response_model=AreaResponse)
+def update_area(area_id: int, area: AreaCreate, db: Session = Depends(get_db)):
+    db_area = db.query(Area).filter(Area.id == area_id).first()
+    if not db_area:
+        raise HTTPException(status_code=404, detail="Area not found")
+    
+    db_area.name = area.name
+    db_area.plant = area.plant
+    db_area.description = area.description
+    
+    db.commit()
+    db.refresh(db_area)
+    return db_area
+
+@router.delete("/{area_id}")
+def delete_area(area_id: int, db: Session = Depends(get_db)):
+    db_area = db.query(Area).filter(Area.id == area_id).first()
+    if not db_area:
+        raise HTTPException(status_code=404, detail="Area not found")
+        
+    db.delete(db_area)
+    db.commit()
+    return {"message": "Area deleted successfully"}
+
 @router.get("/", response_model=List[AreaResponse])
 def get_areas(db: Session = Depends(get_db)):
     return db.query(Area).all()

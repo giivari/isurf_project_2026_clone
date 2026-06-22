@@ -33,30 +33,60 @@ $this->title = 'Manajemen Area & Perangkat';
 
 <!-- Modal Add Area -->
 <div id="addAreaModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: var(--space-4);">
-    <div style="background: white; border-radius: var(--radius-lg); width: 100%; max-width: 500px; display: flex; flex-direction: column; box-shadow: var(--elevation-3);">
-        <div style="padding: var(--space-5); border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
-            <h3 class="text-h3" style="margin: 0;">Tambah Area Baru</h3>
+    <div style="background: white; border-radius: var(--radius-lg); width: 100%; max-width: 400px; display: flex; flex-direction: column; box-shadow: var(--elevation-3);">
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="text-h4" style="margin: 0;">Tambah Area Baru</h3>
             <button onclick="closeAddAreaModal()" style="background: none; border: none; cursor: pointer; color: var(--gray-400);">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
         </div>
-        <div style="padding: var(--space-5);">
+        <div style="padding: var(--space-4);">
             <div style="margin-bottom: 16px;">
-                <label class="text-caption font-medium" style="display: block; margin-bottom: 8px;">Nama Area *</label>
-                <input type="text" id="newAreaName" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;" placeholder="cth: Area A - Selatan">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px; color: var(--gray-600);">Nama Area *</label>
+                <input type="text" id="newAreaName" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px; background: var(--gray-50);">
             </div>
             <div style="margin-bottom: 16px;">
-                <label class="text-caption font-medium" style="display: block; margin-bottom: 8px;">Jenis Tanaman</label>
-                <input type="text" id="newAreaPlant" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;" placeholder="cth: Tomat, Selada (Opsional)">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px; color: var(--gray-600);">Jenis Tanaman</label>
+                <input type="text" id="newAreaPlant" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px; background: var(--gray-50);">
             </div>
             <div style="margin-bottom: 16px;">
-                <label class="text-caption font-medium" style="display: block; margin-bottom: 8px;">Deskripsi</label>
-                <textarea id="newAreaDesc" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;" rows="2" placeholder="Deskripsi area..."></textarea>
+                <label style="display: block; font-size: 13px; margin-bottom: 4px; color: var(--gray-600);">Deskripsi</label>
+                <textarea id="newAreaDesc" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px; background: var(--gray-50); resize: vertical; min-height: 80px;"></textarea>
             </div>
         </div>
-        <div style="padding: var(--space-5); border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: var(--space-3);">
+        <div style="padding: var(--space-4); border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: 8px;">
             <button class="ds-btn-outline" onclick="closeAddAreaModal()">Batal</button>
-            <button class="ds-btn-primary" id="submitAreaBtn" onclick="submitNewArea()">Simpan Area</button>
+            <button class="ds-btn-primary" id="submitAreaBtn" onclick="submitAddArea()">Simpan Area</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Edit Area -->
+<div id="editAreaModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: var(--space-4);">
+    <div style="background: white; border-radius: var(--radius-lg); width: 100%; max-width: 400px; display: flex; flex-direction: column; box-shadow: var(--elevation-3);">
+        <div style="padding: var(--space-4); border-bottom: 1px solid var(--gray-200); display: flex; justify-content: space-between; align-items: center;">
+            <h3 class="text-h4" style="margin: 0;">Edit Area</h3>
+            <button onclick="closeEditAreaModal()" style="background: none; border: none; cursor: pointer; color: var(--gray-400);">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <div style="padding: var(--space-4);">
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px; color: var(--gray-600);">Nama Area *</label>
+                <input type="text" id="editAreaName" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px; background: var(--gray-50);">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px; color: var(--gray-600);">Jenis Tanaman</label>
+                <input type="text" id="editAreaPlant" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px; background: var(--gray-50);">
+            </div>
+            <div style="margin-bottom: 16px;">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px; color: var(--gray-600);">Deskripsi</label>
+                <textarea id="editAreaDesc" style="width: 100%; padding: 10px; border: 1px solid var(--gray-300); border-radius: 6px; background: var(--gray-50); resize: vertical; min-height: 80px;"></textarea>
+            </div>
+        </div>
+        <div style="padding: var(--space-4); border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: 8px;">
+            <button class="ds-btn-outline" onclick="closeEditAreaModal()">Batal</button>
+            <button class="ds-btn-primary" id="submitEditAreaBtn" onclick="submitEditArea()">Simpan Area</button>
         </div>
     </div>
 </div>
@@ -405,6 +435,7 @@ $this->registerJsFile('@web/js/isurf-api.js?v=' . time(), ['depends' => [\yii\we
 <script>
 let currentManageAreaId = null;
 let currentManageAreaName = null;
+let editAreaId = null;
 
 async function loadAreas() {
     const tbody = document.getElementById('areasTableBody');
@@ -431,10 +462,12 @@ async function loadAreas() {
                     ${area.plant || 'Belum ditentukan'}
                 </td>
                 <td style="padding: var(--space-4); text-align: right; white-space: nowrap;">
-                    <a href="${window.location.origin}${window.location.pathname}?r=site/area-details&id=${area.id}" class="ds-btn-outline" style="padding: 6px 12px; font-size: 13px; text-decoration: none; display: inline-block;">
+                    <a href="${window.location.origin}${window.location.pathname}?r=site/area-details&id=${area.id}" class="ds-btn-outline" style="padding: 6px 12px; font-size: 13px; text-decoration: none; display: inline-block; margin-right: 4px;">
                         <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         Detail Aturan Area
                     </a>
+                    <button class="ds-btn-outline" style="padding: 6px 12px; font-size: 13px; color: var(--blue-600); border-color: var(--blue-200); margin-right: 4px;" onclick='openEditAreaModal(${JSON.stringify(area).replace(/'/g, "&#39;")})'>Edit</button>
+                    <button class="ds-btn-outline" style="padding: 6px 12px; font-size: 13px; color: var(--red-600); border-color: var(--red-200);" onclick="deleteArea(${area.id})">Hapus</button>
                 </td>
             `;
             tbody.appendChild(tr);
@@ -455,7 +488,7 @@ function closeAddAreaModal() {
     document.getElementById('addAreaModal').style.display = 'none';
 }
 
-async function submitNewArea() {
+async function submitAddArea() {
     const name = document.getElementById('newAreaName').value;
     const plant = document.getElementById('newAreaPlant').value;
     const desc = document.getElementById('newAreaDesc').value;
@@ -479,6 +512,57 @@ async function submitNewArea() {
     } finally {
         btn.disabled = false;
         btn.innerHTML = 'Simpan Area';
+    }
+}
+
+function openEditAreaModal(area) {
+    editAreaId = area.id;
+    document.getElementById('editAreaName').value = area.name;
+    document.getElementById('editAreaPlant').value = area.plant || '';
+    document.getElementById('editAreaDesc').value = area.description || '';
+    document.getElementById('editAreaModal').style.display = 'flex';
+}
+
+function closeEditAreaModal() {
+    document.getElementById('editAreaModal').style.display = 'none';
+}
+
+async function submitEditArea() {
+    const name = document.getElementById('editAreaName').value;
+    const plant = document.getElementById('editAreaPlant').value;
+    const desc = document.getElementById('editAreaDesc').value;
+    
+    if(!name) {
+        alert("Nama Area wajib diisi!");
+        return;
+    }
+
+    const btn = document.getElementById('submitEditAreaBtn');
+    btn.disabled = true;
+    btn.innerHTML = 'Menyimpan...';
+
+    try {
+        await ISURF_API.updateArea(editAreaId, { name: name, plant: plant, description: desc });
+        closeEditAreaModal();
+        alert("Area berhasil diperbarui!");
+        loadAreas();
+    } catch (err) {
+        alert("Gagal memperbarui: " + err.message);
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = 'Simpan Area';
+    }
+}
+
+async function deleteArea(id) {
+    if(!confirm("Apakah Anda yakin ingin menghapus Area ini? Semua sensor dan aktuator di dalamnya juga akan terhapus.")) return;
+    
+    try {
+        await ISURF_API.deleteArea(id);
+        alert("Area berhasil dihapus!");
+        loadAreas();
+    } catch (err) {
+        alert("Gagal menghapus: " + err.message);
     }
 }
 

@@ -1,5 +1,5 @@
 const ISURF_API = {
-    baseUrl: 'https://api.digdaya.net/isurf/v1',
+    baseUrl: 'https://isurf.digdaya.net/isurf/v1/api',
 
     async getLatestReadings() {
         try {
@@ -62,6 +62,44 @@ const ISURF_API = {
             return await response.json();
         } catch (error) {
             console.error('Error adding area:', error);
+            throw error;
+        }
+    },
+
+    async updateArea(areaId, areaData) {
+        try {
+            const response = await fetch(`${this.baseUrl}/areas/${areaId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(areaData)
+            });
+            
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(JSON.stringify(errData) || 'Failed to update area');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error updating area:', error);
+            throw error;
+        }
+    },
+
+    async deleteArea(areaId) {
+        try {
+            const response = await fetch(`${this.baseUrl}/areas/${areaId}`, {
+                method: 'DELETE'
+            });
+            
+            if (!response.ok) {
+                const errData = await response.json();
+                throw new Error(JSON.stringify(errData) || 'Failed to delete area');
+            }
+            return await response.json();
+        } catch (error) {
+            console.error('Error deleting area:', error);
             throw error;
         }
     },
