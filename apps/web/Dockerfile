@@ -1,4 +1,4 @@
-FROM php:8.1-apache
+FROM php:8.2-apache
 
 # Enable Apache mod_rewrite for Yii2 URLs
 RUN a2enmod rewrite
