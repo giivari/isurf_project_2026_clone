@@ -24,7 +24,6 @@ WORKDIR /var/www/html
 COPY . .
 
 # Set permissions
-RUN chown -R www-data:www-data /var/www/html/frontend/web/assets \
-    && chown -R www-data:www-data /var/www/html/frontend/runtime
+RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
