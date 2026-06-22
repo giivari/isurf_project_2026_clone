@@ -20,8 +20,17 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 
 WORKDIR /var/www/html
 
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
 # Copy application files
 COPY . .
+
+# Install PHP dependencies
+RUN composer install --no-dev --optimize-autoloader
+
+# Initialize Yii2 application (Production environment)
+RUN php init --env=Production --overwrite=All
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html
