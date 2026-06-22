@@ -9,6 +9,9 @@ private:
     bool connected;
     String readEspResponse(uint32_t timeout = 2000);
     bool sendCommand(String cmd, String expectedResponse, uint32_t timeout = 2000);
+    
+    // MQTT Private Methods
+    bool connectMQTT();
 
 public:
     NetworkManager();
@@ -17,10 +20,13 @@ public:
     bool isConnected();
     bool connectWiFi();
     
-    // HTTP API Calls
+    // Data Sync Methods (HTTP or MQTT based on config)
     bool sendData(String jsonPayload);
     bool syncConfig(ActuatorManager* actuatorManager);
     bool syncActuatorState(ActuatorManager* actuatorManager);
+    
+    // Async Message Processing (for MQTT)
+    void checkMessages(ActuatorManager* actuatorManager);
 };
 
 #endif // NETWORK_MANAGER_H

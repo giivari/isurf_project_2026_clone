@@ -15,6 +15,8 @@ use frontend\models\PasswordResetRequestForm;
 use frontend\models\ResetPasswordForm;
 use frontend\models\SignupForm;
 use frontend\models\ContactForm;
+use common\models\SensorLog;
+use yii\web\Response;
 
 /**
  * Site controller
@@ -301,5 +303,146 @@ class SiteController extends Controller
 
     public function actionAreas() {
         return $this->render("areas");
+    }
+
+    /**
+     * API ENDPOINTS UNTUK DASHBOARD
+     */
+
+    public function actionGetHistory($dataType = 'Suhu Udara', $hours = 24)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        
+        $hours = (int)$hours;
+        
+        // Tentukan interval grouping berdasarkan rentang waktu:
+        // - 24 Jam: rata-rata per 30 menit (1800 detik)
+        // - 7 Hari: rata-rata per 2 jam (7200 detik)
+        // - 30 Hari: rata-rata per 12 jam (43200 detik)
+        if ($hours <= 24) {
+            $interval = 1800; 
+        } elseif ($hours <= 168) {
+            $interval = 7200; 
+        } else {
+            $interval = 43200; 
+        }
+
+        $limitTime = time() - ($hours * 3600);
+
+        // Group by interval menggunakan fungsi matematika SQL sederhana
+        $logs = SensorLog::find()
+            ->select([
+                new \yii\db\Expression("FLOOR(created_at / {$interval}) * {$interval} AS grouped_time"),
+                new \yii\db\Expression("AVG(temperature) AS temperature"),
+                new \yii\db\Expression("AVG(humidity) AS humidity"),
+                new \yii\db\Expression("AVG(tds) AS tds"),
+                new \yii\db\Expression("AVG(ph) AS ph")
+            ])
+            ->where(['>=', 'created_at', $limitTime])
+            ->groupBy(['grouped_time'])
+            ->orderBy(['grouped_time' => SORT_ASC])
+            ->asArray()
+            ->all();
+
+        $result = [];
+        foreach ($logs as $log) {
+            $val = null;
+            if ($dataType === 'Suhu Udara') $val = $log['temperature'];
+            if ($dataType === 'Kelembaban Udara') $val = $log['humidity'];
+            if ($dataType === 'TDS Air') $val = $log['tds'];
+            if ($dataType === 'pH Air') $val = $log['ph'];
+
+            if ($val !== null) {
+                $timestamp = (int)$log['grouped_time'];
+                $result[] = [
+                    'timestamp' => gmdate("Y-m-d\TH:i:s", $timestamp),
+                    'avg_value' => round((float)$val, 2), // Bulatkan 2 desimal
+                    'data_type' => $dataType
+                ];
+            }
+        }
+        return $result;
+    }
+
+    public function actionLatestReadings()
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $latest = SensorLog::find()->orderBy(['created_at' => SORT_DESC])->one();
+        
+        if (!$latest) return [];
+
+        return [
+            ['data_type' => 'Suhu Udara', 'avg_value' => $latest->temperature ?? 0, 'timestamp' => gmdate("Y-m-d\TH:i:s", $latest->created_at)],
+            ['data_type' => 'Kelembaban Udara', 'avg_value' => $latest->humidity ?? 0, 'timestamp' => gmdate("Y-m-d\TH:i:s", $latest->created_at)],
+            ['data_type' => 'TDS Air', 'avg_value' => $latest->tds ?? 0, 'timestamp' => gmdate("Y-m-d\TH:i:s", $latest->created_at)],
+            ['data_type' => 'pH Air', 'avg_value' => $latest->ph ?? 0, 'timestamp' => gmdate("Y-m-d\TH:i:s", $latest->created_at)],
+        ];
+    }
+
+    public function actionGetLogs($hours = 24)
+    {
+        Yii::$app->response->format = Response::FORMAT_JSON;
+        $limitTime = time() - ((int)$hours * 3600);
+        
+        $logs = SensorLog::find()
+            ->where(['>=', 'created_at', $limitTime])
+            ->orderBy(['created_at' => SORT_DESC])
+            ->limit(100) // Batasi 100 log terbaru agar browser tetap responsif
+            ->all();
+
+        $result = [];
+        foreach ($logs as $log) {
+            $tanggal = gmdate("d M Y", $log->created_at);
+            $waktu = gmdate("H:i:s", $log->created_at);
+            
+            if ($log->temperature !== null) {
+                $result[] = ['tanggal' => $tanggal, 'waktu' => $waktu, 'nama_sensor' => 'Suhu Udara', 'nilai_bacaan' => $log->temperature . ' °C', 'anomali' => '-', 'status' => 'Normal'];
+            }
+            if ($log->humidity !== null) {
+                $result[] = ['tanggal' => $tanggal, 'waktu' => $waktu, 'nama_sensor' => 'Kelembaban Udara', 'nilai_bacaan' => $log->humidity . ' %', 'anomali' => '-', 'status' => 'Normal'];
+            }
+            if ($log->tds !== null) {
+                $result[] = ['tanggal' => $tanggal, 'waktu' => $waktu, 'nama_sensor' => 'TDS Air', 'nilai_bacaan' => $log->tds . ' ppm', 'anomali' => '-', 'status' => 'Normal'];
+            }
+            if ($log->ph !== null) {
+                $result[] = ['tanggal' => $tanggal, 'waktu' => $waktu, 'nama_sensor' => 'pH Air', 'nilai_bacaan' => $log->ph, 'anomali' => '-', 'status' => 'Normal'];
+            }
+        }
+        
+        return $result;
+    }
+
+    public function actionExportCsv($start = null, $end = null)
+    {
+        $query = SensorLog::find()->orderBy(['created_at' => SORT_DESC]);
+        
+        if ($start) {
+            $query->andWhere(['>=', 'created_at', strtotime($start)]);
+        }
+        if ($end) {
+            $query->andWhere(['<=', 'created_at', strtotime($end)]);
+        }
+        
+        $logs = $query->limit(10000)->all();
+        
+        header('Content-Type: text/csv; charset=utf-8');
+        header('Content-Disposition: attachment; filename=isurf_sensor_log_' . date('Ymd_His') . '.csv');
+        
+        $output = fopen('php://output', 'w');
+        fputcsv($output, ['Waktu (UTC)', 'Device ID', 'Suhu Udara (C)', 'Kelembaban Udara (%)', 'TDS (ppm)', 'pH']);
+        
+        foreach ($logs as $log) {
+            fputcsv($output, [
+                gmdate('Y-m-d H:i:s', $log->created_at),
+                $log->device_id,
+                $log->temperature,
+                $log->humidity,
+                $log->tds,
+                $log->ph
+            ]);
+        }
+        
+        fclose($output);
+        exit;
     }
 }

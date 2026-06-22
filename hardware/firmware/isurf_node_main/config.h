@@ -30,13 +30,34 @@
 #define ESP_SERIAL Serial3
 #define ESP_BAUDRATE 115200
 
-// Network & API Configuration
+// ==========================================
+// CONNECTION MODE SELECTION
+// ==========================================
+#define NET_MODE_HTTP 0
+#define NET_MODE_MQTT 1
+
+// PILIH MODE KONEKSI DI SINI:
+#define CONNECTION_MODE NET_MODE_MQTT
+
+// ==========================================
+// Network & API Configuration (UMUM)
+// ==========================================
 #define WIFI_SSID       "NAMA_WIFI_ANDA"
 #define WIFI_PASSWORD   "PASSWORD_WIFI_ANDA"
+#define DEVICE_CODE     "ESP32_MAIN_01"      // GANTI DENGAN KODE DEVICE DI DATABASE
+
+// --- PENGATURAN MODE HTTP LOKAL ---
 #define SERVER_IP       "192.168.1.100"      // GANTI DENGAN IP KOMPUTER SERVER (Tidak bisa pakai localhost)
 #define SERVER_PORT     "8000"
-#define DEVICE_CODE     "ESP32_MAIN_01"      // GANTI DENGAN KODE DEVICE DI DATABASE
 #define API_KEY         "supersecure"
+
+// --- PENGATURAN MODE MQTT ---
+#define MQTT_BROKER     "broker.hivemq.com" // Disarankan pakai broker public non-ssl (1883) untuk stabilitas ESP AT
+#define MQTT_PORT       1883                // Jika pakai HiveMQ Cloud (MQTTS), ganti ke 8883
+#define MQTT_USER       "isurf"             // Isi jika MQTT broker butuh username
+#define MQTT_PASS       "..."      // Isi jika MQTT broker butuh password
+#define MQTT_TOPIC_PUB  "isurf/device/sensor"
+#define MQTT_TOPIC_SUB  "isurf/device/control"
 
 // Timing Intervals
 #define SENSOR_READ_INTERVAL 10000UL      // 10 detik

@@ -20,33 +20,38 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const mappings = {
             'Suhu Udara': { val: 'metric-temp', status: 'status-temp' },
-            'Kelembaban Udara': { val: 'metric-humidity', status: 'status-humidity' }
+            'Kelembaban Udara': { val: 'metric-humidity', status: 'status-humidity' },
+            'TDS Air': { val: 'metric-tds', status: 'status-tds' },
+            'pH Air': { val: 'metric-ph', status: 'status-ph' }
         };
 
         for (const [sensorName, uiIds] of Object.entries(mappings)) {
             if (latestByType[sensorName]) {
                 const reading = latestByType[sensorName];
                 const valEl = document.getElementById(uiIds.val);
-                if (valEl) valEl.textContent = reading.avg_value.toFixed(1);
+                if (valEl) {
+                    if (sensorName === 'TDS Air') {
+                        valEl.textContent = Math.round(reading.avg_value);
+                    } else {
+                        valEl.textContent = reading.avg_value.toFixed(1);
+                    }
+                }
 
                 if (uiIds.status) {
                     const statEl = document.getElementById(uiIds.status);
-                    if (sensorName === 'Suhu Udara') {
-                        if(reading.avg_value > 30 || reading.avg_value < 15) {
-                            statEl.textContent = 'Peringatan';
-                            statEl.className = 'ds-badge ds-badge-warning';
-                        } else {
-                            statEl.textContent = 'Normal';
-                            statEl.className = 'ds-badge ds-badge-success';
-                        }
-                    } else if (sensorName === 'Kelembaban Udara') {
-                        if(reading.avg_value < 40 || reading.avg_value > 80) {
-                            statEl.textContent = 'Peringatan';
-                            statEl.className = 'ds-badge ds-badge-warning';
-                        } else {
-                            statEl.textContent = 'Normal';
-                            statEl.className = 'ds-badge ds-badge-success';
-                        }
+                    let isWarning = false;
+                    
+                    if (sensorName === 'Suhu Udara' && (reading.avg_value > 30 || reading.avg_value < 15)) isWarning = true;
+                    if (sensorName === 'Kelembaban Udara' && (reading.avg_value < 40 || reading.avg_value > 80)) isWarning = true;
+                    if (sensorName === 'TDS Air' && (reading.avg_value > 500)) isWarning = true;
+                    if (sensorName === 'pH Air' && (reading.avg_value < 5.5 || reading.avg_value > 8.5)) isWarning = true;
+
+                    if (isWarning) {
+                        statEl.textContent = 'Peringatan';
+                        statEl.className = 'ds-badge ds-badge-warning';
+                    } else {
+                        statEl.textContent = 'Normal';
+                        statEl.className = 'ds-badge ds-badge-success';
                     }
                 }
             } else {
@@ -59,44 +64,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         statEl.className = 'ds-badge ds-badge-danger';
                     }
                 }
-            }
-        }
-        
-        // Fetch Water Usage
-        const waterData = await ISURF_API.getWaterUsage();
-        const waterValEl = document.getElementById('metric-water');
-        if (waterValEl) waterValEl.textContent = waterData.remaining;
-        const waterStatEl = document.getElementById('status-water');
-        if (waterStatEl) {
-            waterStatEl.textContent = 'Cukup';
-            waterStatEl.className = 'ds-badge ds-badge-success';
-            if (waterData.remaining < 200) {
-                waterStatEl.textContent = 'Kritis';
-                waterStatEl.className = 'ds-badge ds-badge-danger';
-            }
-        }
-
-        // Admin Only: Fetch Pending Requests
-        if (!window.isGuestUser) {
-            try {
-                const requests = await ISURF_API.getDataRequests();
-                const pendingCount = requests.filter(r => r.status === 'PENDING').length;
-                
-                const reqValEl = document.getElementById('metric-requests');
-                if (reqValEl) reqValEl.textContent = pendingCount;
-                
-                const reqStatEl = document.getElementById('status-requests');
-                if (reqStatEl) {
-                    if (pendingCount > 0) {
-                        reqStatEl.textContent = 'Menunggu';
-                        reqStatEl.className = 'ds-badge ds-badge-warning';
-                    } else {
-                        reqStatEl.textContent = 'Selesai';
-                        reqStatEl.className = 'ds-badge ds-badge-success';
-                    }
-                }
-            } catch (e) {
-                console.error(e);
             }
         }
         
@@ -119,13 +86,18 @@ document.addEventListener('DOMContentLoaded', function() {
         
         const areaId = 1; // Default to area 1 for now
         const tempData = await ISURF_API.getHistory(areaId, 'Suhu Udara', hours);
-        const labels = tempData.map(d => ISURF_API.formatTimestamp(d.timestamp).split(' ')[0]);
+        const labels = tempData.map(d => {
+            const timeStr = ISURF_API.formatTimestamp(d.timestamp).split(' ')[0];
+            if (hours <= 24) return timeStr;
+            const dateStr = new Date(d.timestamp + 'Z').toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
+            return `${dateStr} ${timeStr}`;
+        });
         const vals = tempData.map(d => d.avg_value);
 
         if (tempChartInstance) {
             tempChartInstance.data.labels = labels;
             tempChartInstance.data.datasets[0].data = vals;
-            tempChartInstance.update();
+            tempChartInstance.update('none'); // Update without full animation flash
         } else {
             tempChartInstance = new Chart(tempCtx, {
                 type: 'line',
@@ -159,35 +131,71 @@ document.addEventListener('DOMContentLoaded', function() {
         const waterCtx = document.getElementById('waterChart');
         if (!waterCtx) return;
         
-        const waterData = await ISURF_API.getWaterUsage(hours);
-        const labels = waterData.history.map(d => ISURF_API.formatTimestamp(d.timestamp).split(' ')[0]);
-        const vals = waterData.history.map(d => d.value);
+        const areaId = 1;
+        const tdsData = await ISURF_API.getHistory(areaId, 'TDS Air', hours);
+        const phData = await ISURF_API.getHistory(areaId, 'pH Air', hours);
+        
+        // Asumsi timestamps TDS dan pH sama karena digrouping berdasarkan query backend
+        const labels = tdsData.map(d => {
+            const timeStr = ISURF_API.formatTimestamp(d.timestamp).split(' ')[0];
+            if (hours <= 24) return timeStr;
+            const dateStr = new Date(d.timestamp + 'Z').toLocaleDateString('id-ID', { month: 'short', day: 'numeric' });
+            return `${dateStr} ${timeStr}`;
+        });
+        
+        const valsTds = tdsData.map(d => d.avg_value);
+        const valsPh = phData.map(d => d.avg_value);
 
         if (waterChartInstance) {
             waterChartInstance.data.labels = labels;
-            waterChartInstance.data.datasets[0].data = vals;
-            waterChartInstance.update();
+            waterChartInstance.data.datasets[0].data = valsTds;
+            waterChartInstance.data.datasets[1].data = valsPh;
+            waterChartInstance.update('none');
         } else {
             waterChartInstance = new Chart(waterCtx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Penggunaan Air (L)',
-                            data: vals,
-                            backgroundColor: '#60A5FA',
-                            borderRadius: 4
+                            label: 'TDS Air (ppm)',
+                            data: valsTds,
+                            borderColor: '#3B82F6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'pH Air',
+                            data: valsPh,
+                            borderColor: '#EAB308',
+                            backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            yAxisID: 'y1'
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
+                    plugins: { legend: { position: 'top' } },
                     scales: {
-                        y: { grid: { color: 'rgba(255, 255, 255, 0.05)' } },
-                        x: { grid: { display: false }, ticks: { maxTicksLimit: 12 } }
+                        y: { 
+                            type: 'linear', 
+                            display: true, 
+                            position: 'left',
+                            title: { display: true, text: 'TDS (ppm)' }
+                        },
+                        y1: { 
+                            type: 'linear', 
+                            display: true, 
+                            position: 'right',
+                            grid: { drawOnChartArea: false },
+                            title: { display: true, text: 'pH' }
+                        },
+                        x: { grid: { display: false }, ticks: { maxTicksLimit: 8 } }
                     }
                 }
             });
@@ -218,5 +226,18 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    setInterval(updateDashboardMetrics, 30000);
+    // Auto Update Every 5 Seconds for High Resolution
+    function autoUpdateAll() {
+        updateDashboardMetrics();
+        
+        const tempVal = timeFilterTemp ? timeFilterTemp.value : '24h';
+        const tempHours = tempVal === '7d' ? 168 : (tempVal === '30d' ? 720 : 24);
+        loadTempChart(tempHours);
+
+        const waterVal = timeFilterWater ? timeFilterWater.value : '24h';
+        const waterHours = waterVal === '7d' ? 168 : (waterVal === '30d' ? 720 : 24);
+        loadWaterChart(waterHours);
+    }
+
+    setInterval(autoUpdateAll, 5000);
 });

@@ -1,9 +1,17 @@
 const ISURF_API = {
-    baseUrl: 'http://localhost:8000/api',
+    baseUrl: '', // Local Yii2 routing
+
+    getBaseUrl() {
+        return (typeof window !== 'undefined' && window.appBaseUrl !== undefined) ? window.appBaseUrl : '';
+    },
 
     async getLatestReadings() {
         try {
-            const response = await fetch(`${this.baseUrl}/readings/latest`);
+            const timestamp = new Date().getTime();
+            const url = (typeof window !== 'undefined' && window.apiUrls) 
+                ? `${window.apiUrls.latestReadings}&_t=${timestamp}`
+                : `${this.getBaseUrl()}/index.php?r=site/latest-readings&_t=${timestamp}`;
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Network response was not ok');
             return await response.json();
         } catch (error) {
@@ -14,11 +22,30 @@ const ISURF_API = {
 
     async getHistory(areaId, dataType, hours = 24) {
         try {
-            const response = await fetch(`${this.baseUrl}/readings/history/${areaId}/${dataType}?hours=${hours}`);
+            const timestamp = new Date().getTime();
+            const url = (typeof window !== 'undefined' && window.apiUrls)
+                ? `${window.apiUrls.getHistory}&dataType=${encodeURIComponent(dataType)}&hours=${hours}&_t=${timestamp}`
+                : `${this.getBaseUrl()}/index.php?r=site/get-history&dataType=${encodeURIComponent(dataType)}&hours=${hours}&_t=${timestamp}`;
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Network response was not ok');
             return await response.json();
         } catch (error) {
             console.error('Error fetching history:', error);
+            return [];
+        }
+    },
+
+    async getAllLogs(hours = 24) {
+        try {
+            const timestamp = new Date().getTime();
+            const url = (typeof window !== 'undefined' && window.apiUrls)
+                ? `${window.apiUrls.getLogs}&hours=${hours}&_t=${timestamp}`
+                : `${this.getBaseUrl()}/index.php?r=site/get-logs&hours=${hours}&_t=${timestamp}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching logs:', error);
             return [];
         }
     },
@@ -225,10 +252,7 @@ const ISURF_API = {
         return {
             total_discharged: 0,
             remaining: 0,
-            history: Array.from({length: hours}, (_, i) => ({
-                timestamp: new Date(Date.now() - (hours-i)*3600000).toISOString(),
-                value: 0
-            }))
+            history: []
         };
     },
 

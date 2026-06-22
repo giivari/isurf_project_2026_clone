@@ -74,7 +74,7 @@ $this->registerJsFile('@web/js/isurf-api.js?v=' . time(), ['depends' => [\yii\we
                 <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->role === 'admin'): ?>
                 <button class="ds-btn-primary" style="font-size: 13px; padding: 6px 16px;" onclick="customDownload()">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Export CSV Custom
+                    Export CSV
                 </button>
                 <?php endif; ?>
             </div>
@@ -122,7 +122,7 @@ $this->registerJsFile('@web/js/isurf-api.js?v=' . time(), ['depends' => [\yii\we
                 <?php if (!Yii::$app->user->isGuest && Yii::$app->user->identity->role === 'admin'): ?>
                 <button class="ds-btn-primary" style="font-size: 13px; padding: 6px 16px;" onclick="customDownload()">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    Export CSV Custom
+                    Export CSV
                 </button>
                 <?php endif; ?>
             </div>
@@ -257,13 +257,45 @@ async function loadInitialData() {
 async function loadLogs() {
     const sBody = document.getElementById('logsSensorTableBody');
     const aBody = document.getElementById('logsActuatorTableBody');
-    // MOCK DATA since we don't have a global recent logs endpoint yet
-    sBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--gray-500);">Fitur API Logging belum diimplementasikan di backend MVP, menampilkan data statis sementara.</td></tr>';
-    aBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--gray-500);">Fitur API Logging belum diimplementasikan di backend MVP, menampilkan data statis sementara.</td></tr>';
+    
+    sBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--gray-500);">Memuat data...</td></tr>';
+    
+    try {
+        const logs = await ISURF_API.getAllLogs(24);
+        if (logs.length === 0) {
+            sBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--gray-500);">Tidak ada data log.</td></tr>';
+        } else {
+            let html = '';
+            logs.forEach(log => {
+                html += `
+                <tr>
+                    <td>${log.tanggal}</td>
+                    <td>${log.waktu}</td>
+                    <td>${log.nama_sensor}</td>
+                    <td style="font-weight: 500;">${log.nilai_bacaan}</td>
+                    <td>${log.anomali}</td>
+                    <td><span class="ds-badge ds-badge-success" style="font-size: 11px;">${log.status}</span></td>
+                </tr>
+                `;
+            });
+            sBody.innerHTML = html;
+        }
+    } catch (e) {
+        sBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--red-500);">Gagal memuat log.</td></tr>';
+    }
+
+    aBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--gray-500);">Log aktuator belum tersedia.</td></tr>';
 }
 
 function customDownload() {
-    window.open('http://localhost:8000/api/data-requests/custom-download?date_start=2020-01-01&date_end=2030-01-01', '_blank');
+    const start = document.getElementById('log-sensor-start').value;
+    const end = document.getElementById('log-sensor-end').value;
+    
+    let url = 'index.php?r=site/export-csv';
+    if (start) url += '&start=' + encodeURIComponent(start);
+    if (end) url += '&end=' + encodeURIComponent(end);
+    
+    window.open(url, '_blank');
 }
 
 // Manage Requests Logic
@@ -294,7 +326,8 @@ function renderRequestsTable(data) {
         else if(req.status === 'APPROVED') statusBadge = '<span class="ds-badge ds-badge-success">Approved</span>';
         else statusBadge = '<span class="ds-badge ds-badge-danger">Rejected</span>';
 
-        let docLink = req.document_path ? `<a href="http://localhost:8080${req.document_path}" target="_blank" style="color: var(--blue-500);">Lihat PDF</a>` : '-';
+        let backendBase = `http://${window.location.hostname}:8080`;
+        let docLink = req.document_path ? `<a href="${backendBase}${req.document_path}" target="_blank" style="color: var(--blue-500);">Lihat PDF</a>` : '-';
 
         html += `
         <tr>
@@ -336,7 +369,8 @@ async function submitReview() {
     btn.disabled = true;
 
     try {
-        const res = await fetch(`http://localhost:8000/api/data-requests/${id}/review`, {
+        let apiUrl = `http://${window.location.hostname}:8000/api/data-requests/${id}/review`;
+        const res = await fetch(apiUrl, {
             method: 'PUT',
             headers: { 
                 'Authorization': 'Bearer ' + jwtToken,

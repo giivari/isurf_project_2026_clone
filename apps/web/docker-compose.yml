@@ -22,13 +22,36 @@ services:
       # Mount source-code for development
       - ./:/app
 
+  cron:
+    build: backend
+    command: sh -c "while true; do php yii data/export; sleep 1800; done"
+    volumes:
+      - ./:/app
+    depends_on:
+      - mysql
+
+  mqtt_worker:
+    build: backend
+    command: php yii mqtt-worker/run
+    volumes:
+      - ./:/app
+    depends_on:
+      - mysql
+
   mysql:
     image: mysql:5.7
+    ports:
+      - "3306:3306"
     environment:
       - MYSQL_ROOT_PASSWORD=verysecret
       - MYSQL_DATABASE=yii2advanced
       - MYSQL_USER=yii2advanced
       - MYSQL_PASSWORD=secret
+    volumes:
+      - db_data:/var/lib/mysql
+
+volumes:
+  db_data:
 
   #pgsql:
   #  image: postgres:9.5

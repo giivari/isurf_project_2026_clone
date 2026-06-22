@@ -14,6 +14,7 @@ SDManager       sdManager;
 unsigned long lastSensorRead = 0;
 unsigned long lastDataSend   = 0;
 unsigned long lastStateSync  = 0;
+unsigned long lastConfigSync = 0; // Fixed undeclared variable
 const unsigned long STATE_SYNC_INTERVAL = 30000; // Poll server every 30s for pump state
 
 void setup() {
@@ -37,17 +38,18 @@ void setup() {
 void loop() {
   unsigned long currentMillis = millis();
 
-  // 1. SENSOR READING & ACTUATOR CONTROL
+  // 1. ASYNC MESSAGE CHECK (KHUSUS MQTT)
+  // Membaca pesan asinkron yang masuk kapan saja dari broker
+  networkManager.checkMessages(&actuatorManager);
+
+  // 2. SENSOR READING & ACTUATOR CONTROL
   if (currentMillis - lastSensorRead >= SENSOR_READ_INTERVAL) {
     lastSensorRead = currentMillis;
     
     // Read sensors
     sensorManager.readAllSensors();
     
-    // Evaluate thresholds (Fallbacks in case server connection is lost)
-    // actuatorManager.evaluate() is overridden by Network state if connected.
-    // For this implementation, we will keep evaluate() for Fan control 
-    // and let syncActuatorState() handle the Pump.
+    // Evaluate thresholds
     actuatorManager.evaluate(
       sensorManager.getTdsValue(),
       sensorManager.getPhValue(),
@@ -62,7 +64,7 @@ void loop() {
     );
   }
 
-  // 2. DATA SENDING TO BACKEND
+  // 3. DATA SENDING TO BACKEND
   if (currentMillis - lastDataSend >= DATA_SEND_INTERVAL) {
     lastDataSend = currentMillis;
     
@@ -75,13 +77,13 @@ void loop() {
     }
   }
 
-  // 3. PERIODIC CONFIG SYNC
+  // 4. PERIODIC CONFIG SYNC (Akan diabaikan otomatis jika mode MQTT)
   if (currentMillis - lastConfigSync >= CONFIG_SYNC_INTERVAL) {
     lastConfigSync = currentMillis;
     networkManager.syncConfig(&actuatorManager);
   }
   
-  // 4. PERIODIC ACTUATOR STATE SYNC (Fast Polling)
+  // 5. PERIODIC ACTUATOR STATE SYNC (Akan diabaikan otomatis jika mode MQTT)
   if (currentMillis - lastStateSync >= STATE_SYNC_INTERVAL) {
     lastStateSync = currentMillis;
     networkManager.syncActuatorState(&actuatorManager);
