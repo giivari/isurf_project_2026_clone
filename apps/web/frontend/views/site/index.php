@@ -4,14 +4,19 @@
 $this->title = 'Dashboard';
 
 // Dashboard specific scripts
-$this->registerJsFile('@web/js/isurf-api.js?v=1.1', ['depends' => [\yii\web\JqueryAsset::class]]);
+$this->registerJsFile('@web/js/isurf-api.js?v=1.3', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerJsFile('https://cdn.jsdelivr.net/npm/chart.js', ['depends' => [\yii\web\JqueryAsset::class]]);
 $this->registerJsFile('https://unpkg.com/mqtt/dist/mqtt.min.js', ['position' => \yii\web\View::POS_HEAD]);
 $this->registerJsFile('@web/js/dashboard.js?v=' . time(), ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
 <script>
-    window.appBaseUrl = '<?= yii\helpers\Url::to('@web') ?>';
+    window.appBaseUrl = '<?= Yii::$app->request->baseUrl ?>';
     window.isGuestUser = <?= Yii::$app->user->isGuest ? 'true' : 'false' ?>;
+    window.apiUrls = {
+        latestReadings: '<?= \yii\helpers\Url::to(['site/latest-readings']) ?>',
+        getHistory: '<?= \yii\helpers\Url::to(['site/get-history']) ?>',
+        getLogs: '<?= \yii\helpers\Url::to(['site/get-logs']) ?>'
+    };
 </script>
 
 <?php if (Yii::$app->user->isGuest): ?>

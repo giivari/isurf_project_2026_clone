@@ -1,9 +1,17 @@
 const ISURF_API = {
     baseUrl: '', // Local Yii2 routing
 
+    getBaseUrl() {
+        return (typeof window !== 'undefined' && window.appBaseUrl !== undefined) ? window.appBaseUrl : '';
+    },
+
     async getLatestReadings() {
         try {
-            const response = await fetch(`index.php?r=site/latest-readings`);
+            const timestamp = new Date().getTime();
+            const url = (typeof window !== 'undefined' && window.apiUrls) 
+                ? `${window.apiUrls.latestReadings}&_t=${timestamp}`
+                : `${this.getBaseUrl()}/index.php?r=site/latest-readings&_t=${timestamp}`;
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Network response was not ok');
             return await response.json();
         } catch (error) {
@@ -14,7 +22,11 @@ const ISURF_API = {
 
     async getHistory(areaId, dataType, hours = 24) {
         try {
-            const response = await fetch(`index.php?r=site/get-history&dataType=${encodeURIComponent(dataType)}&hours=${hours}`);
+            const timestamp = new Date().getTime();
+            const url = (typeof window !== 'undefined' && window.apiUrls)
+                ? `${window.apiUrls.getHistory}&dataType=${encodeURIComponent(dataType)}&hours=${hours}&_t=${timestamp}`
+                : `${this.getBaseUrl()}/index.php?r=site/get-history&dataType=${encodeURIComponent(dataType)}&hours=${hours}&_t=${timestamp}`;
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Network response was not ok');
             return await response.json();
         } catch (error) {
@@ -25,7 +37,11 @@ const ISURF_API = {
 
     async getAllLogs(hours = 24) {
         try {
-            const response = await fetch(`index.php?r=site/get-logs&hours=${hours}`);
+            const timestamp = new Date().getTime();
+            const url = (typeof window !== 'undefined' && window.apiUrls)
+                ? `${window.apiUrls.getLogs}&hours=${hours}&_t=${timestamp}`
+                : `${this.getBaseUrl()}/index.php?r=site/get-logs&hours=${hours}&_t=${timestamp}`;
+            const response = await fetch(url);
             if (!response.ok) throw new Error('Network response was not ok');
             return await response.json();
         } catch (error) {

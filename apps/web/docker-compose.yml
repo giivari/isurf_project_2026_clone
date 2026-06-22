@@ -22,6 +22,22 @@ services:
       # Mount source-code for development
       - ./:/app
 
+  cron:
+    build: backend
+    command: sh -c "while true; do php yii data/export; sleep 1800; done"
+    volumes:
+      - ./:/app
+    depends_on:
+      - mysql
+
+  mqtt_worker:
+    build: backend
+    command: php yii mqtt-worker/run
+    volumes:
+      - ./:/app
+    depends_on:
+      - mysql
+
   mysql:
     image: mysql:5.7
     ports:

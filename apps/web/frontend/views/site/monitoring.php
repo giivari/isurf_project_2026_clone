@@ -326,7 +326,8 @@ function renderRequestsTable(data) {
         else if(req.status === 'APPROVED') statusBadge = '<span class="ds-badge ds-badge-success">Approved</span>';
         else statusBadge = '<span class="ds-badge ds-badge-danger">Rejected</span>';
 
-        let docLink = req.document_path ? `<a href="http://localhost:8080${req.document_path}" target="_blank" style="color: var(--blue-500);">Lihat PDF</a>` : '-';
+        let backendBase = `http://${window.location.hostname}:8080`;
+        let docLink = req.document_path ? `<a href="${backendBase}${req.document_path}" target="_blank" style="color: var(--blue-500);">Lihat PDF</a>` : '-';
 
         html += `
         <tr>
@@ -368,7 +369,8 @@ async function submitReview() {
     btn.disabled = true;
 
     try {
-        const res = await fetch(`http://localhost:8000/api/data-requests/${id}/review`, {
+        let apiUrl = `http://${window.location.hostname}:8000/api/data-requests/${id}/review`;
+        const res = await fetch(apiUrl, {
             method: 'PUT',
             headers: { 
                 'Authorization': 'Bearer ' + jwtToken,
