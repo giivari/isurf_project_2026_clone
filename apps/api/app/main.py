@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .routers import areas, sensors, actuators, readings, iot_gateway, auth, alerts, irrigation, data_requests
 
-app = FastAPI(title="iSURF IoT Monitoring API")
+app = FastAPI(title="iSURF IoT Monitoring API", root_path="/isurf/v1")
 
 # Configure CORS
 app.add_middleware(

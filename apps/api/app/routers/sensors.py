@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 
 from ..database import get_db
@@ -13,10 +13,10 @@ class SensorCreate(BaseModel):
     id: str
     name: str
     data_type: str
-    min_threshold: float = None
-    max_threshold: float = None
+    min_threshold: Optional[float] = None
+    max_threshold: Optional[float] = None
     is_online: bool = False
-    area_id: int = None
+    area_id: Optional[int] = None
 
 class SensorResponse(SensorCreate):
     class Config:

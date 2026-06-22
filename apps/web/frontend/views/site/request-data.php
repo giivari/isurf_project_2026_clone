@@ -283,7 +283,7 @@ document.getElementById('requestDataForm').addEventListener('submit', async func
     formData.set('requested_attributes', JSON.stringify(selectedAttrs));
 
     try {
-        const response = await fetch('http://localhost:8000/api/data-requests/', {
+        const response = await fetch('https://api.digdaya.net/isurf/v1/data-requests/', {
             method: 'POST',
             body: formData
         });

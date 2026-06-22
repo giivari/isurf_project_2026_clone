@@ -461,11 +461,11 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Fetch everything in parallel
             const [areaRes, sensorsRes, actuatorsRes, conditionsRes, schedulesRes] = await Promise.all([
-                fetch(`http://localhost:8000/api/areas/${areaId}`),
-                fetch(`http://localhost:8000/api/sensors/`),
-                fetch(`http://localhost:8000/api/actuators/`),
-                fetch(`http://localhost:8000/api/areas/${areaId}/conditions`),
-                fetch(`http://localhost:8000/api/areas/${areaId}/schedules`)
+                fetch(`https://api.digdaya.net/isurf/v1/areas/${areaId}`),
+                fetch(`https://api.digdaya.net/isurf/v1/sensors/`),
+                fetch(`https://api.digdaya.net/isurf/v1/actuators/`),
+                fetch(`https://api.digdaya.net/isurf/v1/areas/${areaId}/conditions`),
+                fetch(`https://api.digdaya.net/isurf/v1/areas/${areaId}/schedules`)
             ]);
 
             const area = await areaRes.json();
@@ -716,7 +716,7 @@ window.openAreaRulesModal = function() {
 
 window.submitNewAreaCondition = async function() {
     try {
-        await fetch(`http://localhost:8000/api/areas/${currentManageAreaId}/conditions`, {
+        await fetch(`https://api.digdaya.net/isurf/v1/areas/${currentManageAreaId}/conditions`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ISURF_API.apiKey},
             body: JSON.stringify({
@@ -735,7 +735,7 @@ window.submitNewAreaCondition = async function() {
 window.deleteAreaCondition = async function(ruleId) {
     if(!confirm('Hapus kondisi ini?')) return;
     try {
-        await fetch(`http://localhost:8000/api/areas/${currentManageAreaId}/conditions/${ruleId}`, {
+        await fetch(`https://api.digdaya.net/isurf/v1/areas/${currentManageAreaId}/conditions/${ruleId}`, {
             method: 'DELETE', headers: {'Authorization': 'Bearer ' + ISURF_API.apiKey}
         });
         window.refreshCurrentArea();
@@ -744,7 +744,7 @@ window.deleteAreaCondition = async function(ruleId) {
 
 window.submitNewAreaSchedule = async function() {
     try {
-        await fetch(`http://localhost:8000/api/areas/${currentManageAreaId}/schedules`, {
+        await fetch(`https://api.digdaya.net/isurf/v1/areas/${currentManageAreaId}/schedules`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ISURF_API.apiKey},
             body: JSON.stringify({
@@ -761,7 +761,7 @@ window.submitNewAreaSchedule = async function() {
 window.deleteAreaSchedule = async function(ruleId) {
     if(!confirm('Hapus jadwal ini?')) return;
     try {
-        await fetch(`http://localhost:8000/api/areas/${currentManageAreaId}/schedules/${ruleId}`, {
+        await fetch(`https://api.digdaya.net/isurf/v1/areas/${currentManageAreaId}/schedules/${ruleId}`, {
             method: 'DELETE', headers: {'Authorization': 'Bearer ' + ISURF_API.apiKey}
         });
         window.refreshCurrentArea();
@@ -770,7 +770,7 @@ window.deleteAreaSchedule = async function(ruleId) {
 
 window.submitBulkThreshold = async function() {
     try {
-        await fetch(`http://localhost:8000/api/areas/${currentManageAreaId}/sensors/thresholds`, {
+        await fetch(`https://api.digdaya.net/isurf/v1/areas/${currentManageAreaId}/sensors/thresholds`, {
             method: 'PUT',
             headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ISURF_API.apiKey},
             body: JSON.stringify({

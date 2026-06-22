@@ -265,7 +265,7 @@ async function loadLogs() {
     const aBody = document.getElementById('logsActuatorTableBody');
     
     try {
-        const res = await fetch('http://localhost:8000/api/readings/latest');
+        const res = await fetch('https://api.digdaya.net/isurf/v1/readings/latest');
         if (res.ok) {
             const data = await res.json();
             if (data.length === 0) {
@@ -317,7 +317,7 @@ async function loadLogs() {
 }
 
 function customDownload() {
-    window.open('http://localhost:8000/api/data-requests/custom-download?date_start=2020-01-01&date_end=2030-01-01', '_blank');
+    window.open('https://api.digdaya.net/isurf/v1/data-requests/custom-download?date_start=2020-01-01&date_end=2030-01-01', '_blank');
 }
 
 // Manage Requests Logic
@@ -390,7 +390,7 @@ async function submitReview() {
     btn.disabled = true;
 
     try {
-        const res = await fetch(`http://localhost:8000/api/data-requests/${id}/review`, {
+        const res = await fetch(`https://api.digdaya.net/isurf/v1/data-requests/${id}/review`, {
             method: 'PUT',
             headers: { 
                 'Authorization': 'Bearer ' + jwtToken,

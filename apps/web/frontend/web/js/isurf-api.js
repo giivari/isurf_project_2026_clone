@@ -1,5 +1,5 @@
 const ISURF_API = {
-    baseUrl: 'http://localhost:8000/api',
+    baseUrl: 'https://api.digdaya.net/isurf/v1',
 
     async getLatestReadings() {
         try {
