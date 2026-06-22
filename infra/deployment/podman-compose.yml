@@ -38,6 +38,7 @@ services:
       - "8082:8000"
     environment:
       - APP_ENV=production
+      - DATABASE_URL=mysql+pymysql://root:password@isurf-db/isurf_db
     depends_on:
       - isurf-db
 
