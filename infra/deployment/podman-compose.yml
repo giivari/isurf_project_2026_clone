@@ -1,6 +1,32 @@
 version: '3.8'
 
 services:
+  # Database Server MariaDB
+  isurf-db:
+    image: mariadb:10.6
+    container_name: isurf-db
+    restart: always
+    environment:
+      MARIADB_ROOT_PASSWORD: password
+      MARIADB_DATABASE: isurf_db
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - isurf_db_data:/var/lib/mysql
+
+  # phpMyAdmin
+  isurf-pma:
+    image: phpmyadmin/phpmyadmin
+    container_name: isurf-pma
+    restart: always
+    environment:
+      PMA_HOST: isurf-db
+      MYSQL_ROOT_PASSWORD: password
+    ports:
+      - "8083:80"
+    depends_on:
+      - isurf-db
+
   # Backend FastAPI
   isurf-api:
     build:
@@ -12,9 +38,8 @@ services:
       - "8082:8000"
     environment:
       - APP_ENV=production
-    # Tambahkan dependensi ke database server jika diperlukan
-    # depends_on:
-    #   - isurf-db
+    depends_on:
+      - isurf-db
 
   # Frontend Yii2 Web
   isurf-web:
@@ -28,5 +53,9 @@ services:
     environment:
       - YII_ENV=prod
       - YII_DEBUG=0
-    # depends_on:
-    #   - isurf-api
+    depends_on:
+      - isurf-db
+      - isurf-api
+
+volumes:
+  isurf_db_data:
