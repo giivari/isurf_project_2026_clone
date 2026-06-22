@@ -4,19 +4,20 @@ from datetime import datetime
 
 class SensorBase(BaseModel):
     name: str
-    sensor_type: str
-    unit: str
+    data_type: str
     min_threshold: Optional[float] = None
     max_threshold: Optional[float] = None
-    is_active: bool = True
+    is_online: bool = True
 
 class SensorCreate(SensorBase):
-    device_id: int
+    id: str
+    area_id: Optional[int] = None
 
 class SensorResponse(SensorBase):
-    id: int
-    device_id: int
+    id: str
+    area_id: Optional[int] = None
     created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 

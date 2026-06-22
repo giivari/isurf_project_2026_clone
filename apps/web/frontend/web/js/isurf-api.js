@@ -220,16 +220,37 @@ const ISURF_API = {
         }
     },
 
+    async getAlerts() {
+        try {
+            const response = await fetch(`${this.baseUrl}/alerts/`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching alerts:', error);
+            return [];
+        }
+    },
+
+    async markAllAlertsRead() {
+        try {
+            const response = await fetch(`${this.baseUrl}/alerts/read-all`, { method: 'PATCH' });
+            if (!response.ok) throw new Error('Failed to mark read');
+            return await response.json();
+        } catch (error) {
+            console.error('Error marking alerts read:', error);
+            return {status: 'error'};
+        }
+    },
+
     async getWaterUsage(hours = 24) {
-        // Return zero data until backend endpoint is fully integrated
-        return {
-            total_discharged: 0,
-            remaining: 0,
-            history: Array.from({length: hours}, (_, i) => ({
-                timestamp: new Date(Date.now() - (hours-i)*3600000).toISOString(),
-                value: 0
-            }))
-        };
+        try {
+            const response = await fetch(`${this.baseUrl}/irrigation/usage?hours=${hours}`);
+            if (!response.ok) throw new Error('Network response was not ok');
+            return await response.json();
+        } catch (error) {
+            console.error('Error fetching water usage:', error);
+            return { total_discharged: 0, remaining: 0, history: [] };
+        }
     },
 
     async updateAreaThresholds(areaId, data) {

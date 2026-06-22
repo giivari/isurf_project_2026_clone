@@ -2,80 +2,54 @@
 
 -- Clear existing data
 SET FOREIGN_KEY_CHECKS = 0;
-TRUNCATE TABLE `irrigation_logs`;
-TRUNCATE TABLE `irrigation_schedules`;
+TRUNCATE TABLE `water_usage_logs`;
+TRUNCATE TABLE `area_schedule_rules`;
+TRUNCATE TABLE `area_condition_rules`;
 TRUNCATE TABLE `alerts`;
-TRUNCATE TABLE `sensor_readings`;
+TRUNCATE TABLE `area_aggregations`;
+TRUNCATE TABLE `sensor_logs`;
+TRUNCATE TABLE `actuators`;
 TRUNCATE TABLE `sensors`;
-TRUNCATE TABLE `devices`;
+TRUNCATE TABLE `areas`;
+TRUNCATE TABLE `data_requests`;
+TRUNCATE TABLE `users`;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- Seed Devices
-INSERT INTO `devices` (`id`, `device_code`, `name`, `type`, `location`, `status`, `last_heartbeat`, `firmware_version`) VALUES
-(1, 'ESP32_MAIN_01', 'Greenhouse Controller Alpha', 'esp32_irrigation', 'Greenhouse A - Sector 1', 'online', NOW(), 'v1.2.0'),
-(2, 'ESP32_SUB_02', 'Nursery Monitor Beta', 'esp32_monitor', 'Nursery B', 'online', NOW(), 'v1.1.5'),
-(3, 'ESP32_OUT_03', 'Outdoor Soil Station', 'esp32_monitor', 'Outdoor Farm 1', 'offline', DATE_SUB(NOW(), INTERVAL 2 DAY), 'v1.0.0');
-
--- Seed Sensors for Device 1 (Main Controller)
-INSERT INTO `sensors` (`id`, `device_id`, `name`, `sensor_type`, `unit`, `min_threshold`, `max_threshold`, `is_active`) VALUES
-(1, 1, 'Soil Moisture Sensor 1', 'moisture', '%', 40.0, 85.0, 1),
-(2, 1, 'Water Tank Level', 'ultrasonic', 'L', 10.0, 100.0, 1),
-(3, 1, 'Water pH Level', 'ph', 'pH', 5.5, 7.5, 1),
-(4, 1, 'Water Quality (TDS)', 'tds', 'ppm', 0.0, 800.0, 1),
-(5, 1, 'Air Temperature', 'temperature', '°C', 15.0, 35.0, 1);
-
--- Seed Sensors for Device 2
-INSERT INTO `sensors` (`id`, `device_id`, `name`, `sensor_type`, `unit`, `min_threshold`, `max_threshold`, `is_active`) VALUES
-(6, 2, 'Nursery Soil Moisture', 'moisture', '%', 50.0, 90.0, 1),
-(7, 2, 'Nursery Temperature', 'temperature', '°C', 20.0, 30.0, 1);
-
--- Seed Users
--- Password for all seed users is 'password123'
+-- 1. Users (Password for all is 'password123')
 INSERT INTO `users` (`username`, `email`, `password_hash`, `auth_key`, `status`, `created_at`, `updated_at`, `full_name`, `role`) VALUES
 ('admin', 'admin@isurf.local', '$2y$13$GpSZwptusVqUqjURiwKO.edMcGWQw1kgqY/Mlj/RIstaXWgAeGXtW', 'auth_key_admin_1', 10, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), 'System Administrator', 'admin'),
 ('operator1', 'operator@isurf.local', '$2y$13$GpSZwptusVqUqjURiwKO.edMcGWQw1kgqY/Mlj/RIstaXWgAeGXtW', 'auth_key_operator_2', 10, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), 'Greenhouse Operator', 'operator'),
 ('viewer1', 'viewer@isurf.local', '$2y$13$GpSZwptusVqUqjURiwKO.edMcGWQw1kgqY/Mlj/RIstaXWgAeGXtW', 'auth_key_viewer_3', 10, UNIX_TIMESTAMP(), UNIX_TIMESTAMP(), 'Guest Viewer', 'viewer');
 
--- Seed Recent Readings (Just a few for initial state, the generator will create more)
-INSERT INTO `sensor_readings` (`sensor_id`, `device_id`, `value`, `recorded_at`) VALUES
-(1, 1, 72.5, DATE_SUB(NOW(), INTERVAL 5 MINUTE)),
-(2, 1, 85.0, DATE_SUB(NOW(), INTERVAL 5 MINUTE)),
-(3, 1, 6.8, DATE_SUB(NOW(), INTERVAL 5 MINUTE)),
-(4, 1, 450.0, DATE_SUB(NOW(), INTERVAL 5 MINUTE)),
-(5, 1, 26.5, DATE_SUB(NOW(), INTERVAL 5 MINUTE)),
-(6, 2, 65.0, DATE_SUB(NOW(), INTERVAL 10 MINUTE)),
-(7, 2, 24.0, DATE_SUB(NOW(), INTERVAL 10 MINUTE));
+-- 2. Areas
+INSERT INTO `areas` (`id`, `name`, `plant`, `description`) VALUES
+(1, 'Greenhouse A (Hidroponik NFT)', 'Selada Air, Pakcoy, Kangkung', 'Fokus pada sayuran daun dengan sistem Nutrient Film Technique (NFT). Terdiri dari 5 rak utama.'),
+(2, 'Greenhouse B (Soil-based)', 'Tomat Cherry, Paprika, Cabai', 'Budidaya sayuran buah dengan media tanah konvensional dan sistem irigasi tetes (Drip Irrigation).'),
+(3, 'Greenhouse C (Aeroponik)', 'Kentang Granola, Mint', 'Sistem budidaya aeroponik untuk umbi-umbian dan herbal. Akar menggantung dan disemprot nutrisi bertekanan.');
 
--- Seed Alerts
-INSERT INTO `alerts` (`device_id`, `sensor_id`, `alert_type`, `message`, `value`, `threshold_exceeded`, `is_read`, `created_at`) VALUES
-(1, 1, 'warning', 'Soil moisture is dropping below optimal levels.', 42.5, 40.0, 0, DATE_SUB(NOW(), INTERVAL 2 HOUR)),
-(3, NULL, 'critical', 'Device went offline unexpectedly.', NULL, NULL, 0, DATE_SUB(NOW(), INTERVAL 2 DAY)),
-(1, 4, 'warning', 'TDS levels are slightly high.', 780.0, 800.0, 1, DATE_SUB(NOW(), INTERVAL 3 DAY));
+-- 3. Sensors
+INSERT INTO `sensors` (`id`, `area_id`, `name`, `data_type`, `min_threshold`, `max_threshold`, `is_online`) VALUES
+('DHT-GH1-01', 1, 'Sensor Suhu & Kelembaban Udara 1', 'Suhu Udara', 18.0, 28.0, 1),
+('TDS-GH1-01', 1, 'Sensor Nutrisi TDS/EC Tandon', 'TDS Nutrisi', 800.0, 1200.0, 1),
+('PH-GH1-01', 1, 'Sensor pH Air Tandon', 'pH Air', 5.5, 6.5, 1),
+('MST-GH2-01', 2, 'Sensor Kelembaban Tanah A', 'Kelembaban Tanah', 40.0, 80.0, 1),
+('TMP-GH3-01', 3, 'Sensor Suhu Ruang Akar', 'Suhu Akar', 15.0, 22.0, 1);
 
--- Seed Irrigation Schedules
-INSERT INTO `irrigation_schedules` (`id`, `device_id`, `name`, `start_time`, `duration_minutes`, `days_of_week`, `is_active`) VALUES
-(1, 1, 'Morning Watering', '06:00:00', 15, '1,2,3,4,5,6,0', 1),
-(2, 1, 'Evening Supplemental', '17:30:00', 10, '1,3,5', 1);
+-- 4. Actuators
+INSERT INTO `actuators` (`id`, `area_id`, `name`, `valve_status`, `is_auto_enabled`, `flow_rate_per_sec`) VALUES
+('PMP-GH1-01', 1, 'Pompa Sirkulasi NFT Utama', 'ON', 1, 1.5),
+('PMP-GH2-01', 2, 'Pompa Irigasi Tetes', 'OFF', 1, 2.0),
+('PMP-GH3-01', 3, 'Pompa High-Pressure Aeroponik', 'ON', 1, 0.8);
 
--- Seed Irrigation Logs
-INSERT INTO `irrigation_logs`
-(`schedule_id`, `device_id`, `trigger_type`, `started_at`, `ended_at`, `status`, `water_volume_liters`)
-VALUES
-(
-    1,
-    1,
-    'scheduled',
-    NOW(),
-    NOW(),
-    'completed',
-    25.5
-),
-(
-    NULL,
-    1,
-    'manual',
-    NOW(),
-    NOW(),
-    'completed',
-    18.0
-);
+-- 5. Sample Sensor Logs
+INSERT INTO `sensor_logs` (`sensor_id`, `date`, `time`, `reading`, `status`) VALUES
+('DHT-GH1-01', CURDATE(), CURTIME(), 24.5, 'Normal'),
+('TDS-GH1-01', CURDATE(), CURTIME(), 950.0, 'Normal'),
+('PH-GH1-01', CURDATE(), CURTIME(), 6.2, 'Normal'),
+('MST-GH2-01', CURDATE(), CURTIME(), 65.0, 'Normal'),
+('TMP-GH3-01', CURDATE(), CURTIME(), 20.5, 'Normal');
+
+-- 6. Sample Alerts
+INSERT INTO `alerts` (`sensor_id`, `alert_type`, `message`, `value`, `threshold_exceeded`, `is_read`) VALUES
+('MST-GH2-01', 'Critical', 'Kelembaban Tanah turun drastis di bawah 40%.', 35.5, 4.5, 0),
+('PH-GH1-01', 'Warning', 'pH Air naik mencapai 6.8', 6.8, 0.3, 1);

@@ -85,14 +85,18 @@ $this->registerJsFile('@web/js/isurf-api.js?v=' . time(), ['depends' => [\yii\we
                         <tr>
                             <th>Tanggal</th>
                             <th>Waktu</th>
-                            <th>Nama Sensor</th>
-                            <th>Nilai Bacaan</th>
-                            <th>Anomali</th>
+                            <th>Area</th>
+                            <th>Tanaman</th>
+                            <th>Tipe</th>
+                            <th>Min</th>
+                            <th>Max</th>
+                            <th>Avrg Reading</th>
+                            <th>Anomalies</th>
                             <th>Status</th>
                         </tr>
                     </thead>
                     <tbody id="logsSensorTableBody">
-                        <tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--gray-500);">Loading logs...</td></tr>
+                        <tr><td colspan="10" style="text-align:center; padding: 20px; color: var(--gray-500);">Loading logs...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -224,10 +228,12 @@ function switchTab(tabName) {
 
 let requestsData = [];
 let logsData = []; // Mock logs or fetch from history
+let allAreas = []; // Store areas globally
 
 async function loadInitialData() {
     // Load Areas for Filter
-    const areas = await ISURF_API.getAreas();
+    allAreas = await ISURF_API.getAreas();
+    const areas = allAreas;
     const zoneFilterSens = document.getElementById('log-sensor-zone-filter');
     const zoneFilterAct = document.getElementById('log-actuator-zone-filter');
     if (areas && zoneFilterSens && zoneFilterAct) {
@@ -257,9 +263,57 @@ async function loadInitialData() {
 async function loadLogs() {
     const sBody = document.getElementById('logsSensorTableBody');
     const aBody = document.getElementById('logsActuatorTableBody');
-    // MOCK DATA since we don't have a global recent logs endpoint yet
-    sBody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 20px; color: var(--gray-500);">Fitur API Logging belum diimplementasikan di backend MVP, menampilkan data statis sementara.</td></tr>';
-    aBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--gray-500);">Fitur API Logging belum diimplementasikan di backend MVP, menampilkan data statis sementara.</td></tr>';
+    
+    try {
+        const res = await fetch('http://localhost:8000/api/readings/latest');
+        if (res.ok) {
+            const data = await res.json();
+            if (data.length === 0) {
+                sBody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px; color: var(--gray-500);">Belum ada data sensor.</td></tr>';
+            } else {
+                let html = '';
+                data.forEach(log => {
+                    let isAnomaly = false;
+                    let statusTxt = 'Normal';
+                    if (log.min_threshold !== null && log.avg_value < log.min_threshold) {
+                        isAnomaly = true; statusTxt = 'Kritis (Low)';
+                    }
+                    if (log.max_threshold !== null && log.avg_value > log.max_threshold) {
+                        isAnomaly = true; statusTxt = 'Kritis (High)';
+                    }
+                    
+                    let anomalyBadge = isAnomaly ? '<span class="ds-badge ds-badge-danger" style="background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:4px;">Ya</span>' : '<span class="ds-badge ds-badge-success" style="background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:4px;">Tidak</span>';
+                    let statusBadge = isAnomaly ? `<span style="color:#DC2626;font-weight:600;">${statusTxt}</span>` : `<span style="color:#16A34A;font-weight:600;">${statusTxt}</span>`;
+                    
+                    let areaObj = allAreas.find(a => a.id === log.area_id);
+                    let areaName = areaObj ? areaObj.name : '-';
+                    let areaPlant = areaObj ? areaObj.plant : '-';
+                    let minT = log.min_threshold !== null ? log.min_threshold : '-';
+                    let maxT = log.max_threshold !== null ? log.max_threshold : '-';
+
+                    html += `<tr>
+                        <td>${log.date}</td>
+                        <td>${log.time.split('.')[0]}</td>
+                        <td>${areaName}</td>
+                        <td>${areaPlant}</td>
+                        <td>${log.data_type}</td>
+                        <td>${minT}</td>
+                        <td>${maxT}</td>
+                        <td style="font-weight:600;">${parseFloat(log.avg_value).toFixed(2)}</td>
+                        <td>${anomalyBadge}</td>
+                        <td>${statusBadge}</td>
+                    </tr>`;
+                });
+                sBody.innerHTML = html;
+            }
+        } else {
+            sBody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px; color: var(--gray-500);">Gagal memuat data dari API (Error response).</td></tr>';
+        }
+    } catch(err) {
+        sBody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px; color: var(--gray-500);">Gagal memuat data dari API. Pastikan FastAPI berjalan.</td></tr>';
+    }
+
+    aBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--gray-500);">Log aktuator belum tersedia (Endpoint belum diintegrasikan).</td></tr>';
 }
 
 function customDownload() {

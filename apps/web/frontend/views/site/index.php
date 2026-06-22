@@ -178,7 +178,7 @@ $this->registerJsFile('@web/js/dashboard.js?v=' . time(), ['depends' => [\yii\we
 
 <!-- Actuator Control (Admin Only) -->
 <?php if (!Yii::$app->user->isGuest): ?>
-<div class="glass-card">
+<div class="glass-card" style="margin-top: var(--space-8);">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);">
         <div>
             <h3 class="text-h3" style="font-weight: 700;">Kendali Aktuator</h3>

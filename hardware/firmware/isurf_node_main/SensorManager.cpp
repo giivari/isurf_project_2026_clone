@@ -8,14 +8,17 @@
 // Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 SensorManager::SensorManager() {
-    tdsValue = 0.0;
-    phValue = 7.0;
-    temperature = 25.0; // Default compensation temp
+    airTemp = 28.0;
+    airHumidity = 65.0;
+    soilTemp = 26.0;
+    soilMoisture = 80.0;
+    soilPh = 6.5;
 }
 
 void SensorManager::begin() {
-    pinMode(PIN_TDS_SENSOR, INPUT);
     pinMode(PIN_PH_SENSOR, INPUT);
+    pinMode(PIN_SOIL_MOISTURE, INPUT);
+    pinMode(PIN_SOIL_TEMP, INPUT);
 
     // Initialize OLED if used
     // if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
@@ -26,35 +29,45 @@ void SensorManager::begin() {
 }
 
 void SensorManager::readAllSensors() {
-    // 1. Read TDS (DFRobot Analog TDS)
-    tdsAnalogRaw = analogRead(PIN_TDS_SENSOR);
-    float voltage = tdsAnalogRaw * (5.0 / 1024.0); // 5V ADC
-    // Temperature compensation formula
-    float compensationCoefficient = 1.0 + 0.02 * (temperature - 25.0);
-    float compensationVoltage = voltage / compensationCoefficient;
-    // Convert voltage to TDS value
-    tdsValue = (133.42 * compensationVoltage * compensationVoltage * compensationVoltage 
-             - 255.86 * compensationVoltage * compensationVoltage 
-             + 857.39 * compensationVoltage) * 0.5;
+    // 1. Read Air Temp & Humidity (Simulated DHT22)
+    // Normally: dht.readTemperature(), dht.readHumidity()
+    airTemp = 25.0 + random(-20, 20) / 10.0;     // 23.0 - 27.0
+    airHumidity = 60.0 + random(-50, 50) / 10.0; // 55.0 - 65.0
 
-    // 2. Read Soil pH
+    // 2. Read Soil Moisture
+    soilMoistRaw = analogRead(PIN_SOIL_MOISTURE);
+    // Convert 0-1023 to 0-100%
+    soilMoisture = map(soilMoistRaw, 1023, 0, 0, 100); 
+
+    // 3. Read Soil Temp
+    soilTempRaw = analogRead(PIN_SOIL_TEMP);
+    // Simulated conversion
+    soilTemp = 24.0 + random(-10, 10) / 10.0;
+
+    // 4. Read Soil pH
     phAnalogRaw = analogRead(PIN_PH_SENSOR);
     float phVoltage = phAnalogRaw * (5.0 / 1024.0);
     // Dummy conversion (need actual sensor calibration logic)
-    phValue = 3.5 * phVoltage; 
+    soilPh = 3.5 * phVoltage; 
     
     // Constraint values
-    if(tdsValue < 0) tdsValue = 0;
-    if(phValue < 0) phValue = 0;
-    if(phValue > 14) phValue = 14;
+    if(soilPh < 0) soilPh = 0;
+    if(soilPh > 14) soilPh = 14;
+    if(soilMoisture < 0) soilMoisture = 0;
+    if(soilMoisture > 100) soilMoisture = 100;
 
-    Serial.print("TDS: "); Serial.print(tdsValue); Serial.print(" ppm | ");
-    Serial.print("pH: "); Serial.print(phValue); Serial.println("");
+    Serial.print("AirT: "); Serial.print(airTemp); 
+    Serial.print("C | AirH: "); Serial.print(airHumidity); 
+    Serial.print("% | SoilT: "); Serial.print(soilTemp);
+    Serial.print("C | SoilM: "); Serial.print(soilMoisture);
+    Serial.print("% | pH: "); Serial.println(soilPh);
 }
 
-float SensorManager::getTdsValue() { return tdsValue; }
-float SensorManager::getPhValue() { return phValue; }
-float SensorManager::getTemperature() { return temperature; }
+float SensorManager::getAirTemp() { return airTemp; }
+float SensorManager::getAirHumidity() { return airHumidity; }
+float SensorManager::getSoilTemp() { return soilTemp; }
+float SensorManager::getSoilMoisture() { return soilMoisture; }
+float SensorManager::getSoilPh() { return soilPh; }
 
 void SensorManager::updateDisplay(bool wifiConnected, bool pumpOn, bool fanOn) {
     // Dummy display logic
@@ -70,14 +83,19 @@ void SensorManager::updateDisplay(bool wifiConnected, bool pumpOn, bool fanOn) {
 
 String SensorManager::buildJsonPayload() {
     // Create JSON payload for FastAPI endpoint
+    // HARUS SESUAI DENGAN SCHEMA DATABASE iSURF BARU
     String json = "{\"readings\": [";
     
-    // TDS Reading
-    json += "{\"sensor_type\": \"tds\", \"value\": " + String(tdsValue) + "},";
-    // pH Reading
-    json += "{\"sensor_type\": \"ph\", \"value\": " + String(phValue) + "},";
-    // Temp Reading
-    json += "{\"sensor_type\": \"temperature\", \"value\": " + String(temperature) + "}";
+    // Suhu Udara
+    json += "{\"sensor_type\": \"Suhu Udara\", \"value\": " + String(airTemp) + "},";
+    // Kelembaban Udara
+    json += "{\"sensor_type\": \"Kelembaban Udara\", \"value\": " + String(airHumidity) + "},";
+    // Suhu Tanah
+    json += "{\"sensor_type\": \"Suhu Tanah\", \"value\": " + String(soilTemp) + "},";
+    // Kelembaban Tanah
+    json += "{\"sensor_type\": \"Kelembaban Tanah\", \"value\": " + String(soilMoisture) + "},";
+    // pH Tanah
+    json += "{\"sensor_type\": \"pH Tanah\", \"value\": " + String(soilPh) + "}";
     
     json += "]}";
     return json;

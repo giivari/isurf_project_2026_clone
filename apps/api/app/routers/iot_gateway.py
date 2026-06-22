@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks, Header
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from datetime import datetime
@@ -10,6 +10,7 @@ from ..models.reading import SensorLog
 from ..models.alert import Alert
 from ..utils.aggregation import aggregate_sensor_data
 from ..utils.automation import evaluate_conditions
+from ..models.actuator import Actuator
 
 router = APIRouter()
 
@@ -22,7 +23,10 @@ class IngestPayload(BaseModel):
     sensors: List[SensorPayload]
 
 @router.post("/ingest")
-def ingest_data(payload: IngestPayload, background_tasks: BackgroundTasks, db: Session = Depends(get_db)):
+def ingest_data(payload: IngestPayload, background_tasks: BackgroundTasks, db: Session = Depends(get_db), x_api_key: str = Header(...)):
+    if x_api_key != "supersecure":  # in production, load from env var
+        raise HTTPException(status_code=401, detail="Invalid API Key")
+    
     now = datetime.now()
     current_date = now.date()
     current_time = now.time()
@@ -72,6 +76,23 @@ def ingest_data(payload: IngestPayload, background_tasks: BackgroundTasks, db: S
         
         if sensor.area_id:
             processed_areas.add((sensor.area_id, sensor.data_type))
+            # Failsafe Cut-off Logic
+            if sensor.data_type == "Level Air" and item.value < 5.0:
+                actuators = db.query(Actuator).filter(Actuator.area_id == sensor.area_id).all()
+                for act in actuators:
+                    if act.valve_status == "ON":
+                        act.valve_status = "OFF"
+                        alert = Alert(
+                            sensor_id=sensor.id,
+                            alert_type="Failsafe Triggered",
+                            message=f"Failsafe aktif! Pompa {act.name} dimatikan paksa karena level air kritis.",
+                            value=item.value,
+                            threshold_exceeded=5.0,
+                            is_read=False
+                        )
+                        db.add(alert)
+                        print(f"[{datetime.now()}] FAILSAFE TRIGGERED! Actuator {act.id} turned OFF.")
+
             # Trigger automation rules evaluation
             background_tasks.add_task(evaluate_conditions, sensor.area_id, sensor.data_type, item.value)
 

@@ -4,18 +4,19 @@ import requests
 import math
 
 API_URL = "http://localhost:8000/iot/ingest"
-API_KEY = "supersecure"
 
-def send_data(device_code, sensor_name, value):
+def send_data(sensors_payload):
     payload = {
-        "api_key": API_KEY,
-        "device_code": device_code,
-        "sensor_name": sensor_name,
-        "value": round(value, 2)
+        "sensors": sensors_payload
+    }
+    headers = {
+        "X-API-Key": "supersecure"
     }
     try:
-        requests.post(API_URL, json=payload)
-        print(f"Sent {sensor_name}: {payload['value']}")
+        requests.post(API_URL, json=payload, headers=headers)
+        for s in sensors_payload:
+            print(f"Sent {s['sensor_id']}: {s['value']} ({s.get('status', 'Normal')})")
+        print("---")
     except Exception as e:
         print(f"Failed to send data: {e}")
 
@@ -23,21 +24,32 @@ def main():
     print("Starting IoT Simulator...")
     step = 0
     while True:
-        # Simulate Soil Moisture (Sine wave + noise)
-        moisture = 60 + 20 * math.sin(step * 0.1) + random.uniform(-2, 2)
-        send_data("ESP32_MAIN_01", "Soil Moisture Sensor 1", moisture)
+        sensors_payload = []
 
-        # Simulate Temperature
-        temp = 25 + 5 * math.sin(step * 0.05) + random.uniform(-0.5, 0.5)
-        send_data("ESP32_MAIN_01", "Air Temperature", temp)
+        # Simulate Greenhouse A (Hidroponik NFT)
+        # DHT-GH1-01 (Suhu Udara, ideal: 18-28)
+        temp_A = 24 + 5 * math.sin(step * 0.05) + random.uniform(-0.5, 0.5)
+        sensors_payload.append({"sensor_id": "DHT-GH1-01", "value": round(temp_A, 2)})
 
-        # Simulate Water Tank
-        water = 80 - (step % 50) + random.uniform(-1, 1)
-        send_data("ESP32_MAIN_01", "Water Tank Level", water)
+        # TDS-GH1-01 (TDS, ideal: 800-1200)
+        tds_A = 1000 + 150 * math.sin(step * 0.1) + random.uniform(-10, 10)
+        sensors_payload.append({"sensor_id": "TDS-GH1-01", "value": round(tds_A, 2)})
 
-        # Simulate TDS
-        tds = 300 + 50 * math.sin(step * 0.2) + random.uniform(-10, 10)
-        send_data("ESP32_MAIN_01", "Water Quality (TDS)", tds)
+        # PH-GH1-01 (pH, ideal: 5.5-6.5)
+        ph_A = 6.0 + 0.5 * math.sin(step * 0.02) + random.uniform(-0.1, 0.1)
+        sensors_payload.append({"sensor_id": "PH-GH1-01", "value": round(ph_A, 2)})
+
+        # Simulate Greenhouse B (Soil-based)
+        # MST-GH2-01 (Kelembaban Tanah, ideal: 40-80)
+        moist_B = 60 + 15 * math.sin(step * 0.08) + random.uniform(-2, 2)
+        sensors_payload.append({"sensor_id": "MST-GH2-01", "value": round(moist_B, 2)})
+
+        # Simulate Greenhouse C (Aeroponik)
+        # TMP-GH3-01 (Suhu Akar, ideal: 15-22)
+        temp_C = 18 + 3 * math.sin(step * 0.04) + random.uniform(-0.3, 0.3)
+        sensors_payload.append({"sensor_id": "TMP-GH3-01", "value": round(temp_C, 2)})
+
+        send_data(sensors_payload)
 
         step += 1
         time.sleep(30) # Send every 30 seconds

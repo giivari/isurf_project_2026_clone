@@ -15,4 +15,5 @@ class Plant(Base):
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
-    zones = relationship("Zone", back_populates="plant")
+    # TODO: Future feature - not yet active
+    # zones = relationship("Zone", back_populates="plant")

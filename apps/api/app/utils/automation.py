@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from ..database import SessionLocal
 from ..models.irrigation import AreaConditionRule
 from ..models.actuator import Actuator
+from ..models.water import WaterUsageLog
 
 def evaluate_conditions(area_id: int, data_type: str, current_value: float):
     db: Session = SessionLocal()
@@ -32,10 +33,21 @@ def evaluate_conditions(area_id: int, data_type: str, current_value: float):
 
                 for actuator in actuators:
                     if actuator.valve_status != rule.action:
+                        if actuator.valve_status == "ON" and rule.action == "OFF":
+                            duration_sec = 60
+                            volume_used = duration_sec * actuator.flow_rate_per_sec
+                            latest_log = db.query(WaterUsageLog).order_by(WaterUsageLog.id.desc()).first()
+                            max_capacity = 100.0
+                            sisa_air = latest_log.water_remaining if latest_log else max_capacity
+                            new_sisa = max(0.0, sisa_air - volume_used)
+                            
+                            new_log = WaterUsageLog(
+                                water_discharged=volume_used,
+                                water_remaining=new_sisa,
+                                actuator_id=actuator.id
+                            )
+                            db.add(new_log)
                         actuator.valve_status = rule.action
-                        # Notice: To track exact water usage, we should record WaterUsageLog here if it turns OFF
-                        # For simplicity in this background task, we just set the valve status.
-                        # Real implementations would calculate duration and deduct water_remaining here.
                 db.commit()
 
     except Exception as e:

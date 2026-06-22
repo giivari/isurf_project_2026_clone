@@ -5,22 +5,27 @@
 
 class SensorManager {
 private:
-    float tdsValue;
-    float phValue;
-    float temperature; // Defaults to 25.0 if no real sensor
+    float airTemp;
+    float airHumidity;
+    float soilTemp;
+    float soilMoisture;
+    float soilPh;
 
-    // Moving average buffers (simplified)
-    int tdsAnalogRaw;
+    // Raw buffers
     int phAnalogRaw;
+    int soilTempRaw;
+    int soilMoistRaw;
 
 public:
     SensorManager();
     void begin();
     
     void readAllSensors();
-    float getTdsValue();
-    float getPhValue();
-    float getTemperature();
+    float getAirTemp();
+    float getAirHumidity();
+    float getSoilTemp();
+    float getSoilMoisture();
+    float getSoilPh();
     
     void updateDisplay(bool wifiConnected, bool pumpOn, bool fanOn);
     String buildJsonPayload();

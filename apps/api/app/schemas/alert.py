@@ -9,13 +9,11 @@ class AlertBase(BaseModel):
     threshold_exceeded: Optional[float] = None
 
 class AlertCreate(AlertBase):
-    device_id: int
-    sensor_id: Optional[int] = None
+    sensor_id: str
 
 class AlertResponse(AlertBase):
     id: int
-    device_id: int
-    sensor_id: Optional[int] = None
+    sensor_id: str
     is_read: bool
     created_at: datetime
     resolved_at: Optional[datetime] = None

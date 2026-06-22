@@ -1,15 +1,5 @@
-# Dokumentasi Pengembangan Digitalisasi Ternak
+# Referensi Proyek iSURF
 
-> 
-> Dibuat oleh:  
-> * DrEng. Heru Sukoco, S.Si., M.T.  
-> * Program Studi Ilmu Komputer  
-> * Sekolah Sains Data, Matematika, dan Informatika (SSMI)  
-> * Institut Pertanian Bogor (IPB)  
-> 
-> Tanggal dibuat: Jum'at, 01 Februari 2024  
-> Tanggal diperbarui: Rabu, 23 April 2025  
-> Versi: 3.0 - Revisi: 2
-> 
+Direktori ini digunakan untuk menyimpan seluruh berkas literatur, panduan *hardware*, lembar spesifikasi sensor (datasheet), pedoman budidaya hidroponik/tanah, serta jurnal ilmiah yang menjadi landasan teoritis bagi pengembangan proyek revitalisasi iSurf Lab.
 
-## 🏗️ Placeholder for content
+Semua file PDF referensi dari peneliti terdahulu maupun paper relevan mengenai Pertanian 4.0 harus diletakkan di dalam folder ini untuk mempermudah pelacakan sumber riset.

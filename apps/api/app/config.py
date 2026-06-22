@@ -5,6 +5,7 @@ class Settings(BaseSettings):
     secret_key: str = "supersecretkey"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 1440
+    port: int = 8000
 
     class Config:
         env_file = ".env"

@@ -1,15 +1,7 @@
-# Dokumentasi Pengembangan Digitalisasi Ternak
+# Riwayat Pengembangan Sistem iSURF
 
-> 
-> Dibuat oleh:  
-> * DrEng. Heru Sukoco, S.Si., M.T.  
-> * Program Studi Ilmu Komputer  
-> * Sekolah Sains Data, Matematika, dan Informatika (SSMI)  
-> * Institut Pertanian Bogor (IPB)  
-> 
-> Tanggal dibuat: Jum'at, 01 Februari 2024  
-> Tanggal diperbarui: Rabu, 23 April 2025  
-> Versi: 3.0 - Revisi: 2
-> 
+Direktori ini berisi rekam jejak, versi lama, dan dokumentasi arsitektur dari prototipe awal sistem iSurf Lab yang dibangun pada tahun 2019.
 
-## 🏗️ Placeholder for content
+Tujuan pelestarian direktori ini adalah untuk menjaga *legacy* dan memfasilitasi komparasi historis antara sistem lama (*legacy system*) dengan sistem baru yang direvitalisasi (menggunakan FastAPI + Yii2).
+
+Harap tidak menggunakan file di dalam direktori ini untuk operasional *production* saat ini.

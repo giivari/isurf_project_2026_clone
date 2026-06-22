@@ -17,6 +17,7 @@ from ..models.sensor import Sensor
 from ..models.reading import AreaAggregation
 from ..schemas.data_request import DataRequestResponse, DataRequestReview
 from ..utils.auth import get_current_user
+from ..utils.rbac import require_operator
 
 router = APIRouter()
 
@@ -48,7 +49,7 @@ async def create_request(
     # Parse sensors
     try:
         sensors_list = json.loads(requested_sensors)
-    except:
+    except (json.JSONDecodeError, TypeError):
         sensors_list = []
 
     tracking_code = str(uuid.uuid4())[:8].upper()
@@ -87,7 +88,8 @@ def get_all_requests(db: Session = Depends(get_db)):
 def review_request(
     request_id: int, 
     review: DataRequestReview, 
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user: dict = Depends(require_operator)
 ):
     db_request = db.query(DataRequest).filter(DataRequest.id == request_id).first()
     if not db_request:
@@ -99,7 +101,8 @@ def review_request(
 
     db_request.status = status_upper
     db_request.admin_notes = review.admin_notes
-    db_request.reviewed_at = datetime.utcnow()
+    from datetime import timezone
+    db_request.reviewed_at = datetime.now(timezone.utc)
     db_request.reviewed_by = 1 # Default admin ID for MVP
     
     if status_upper == "APPROVED":

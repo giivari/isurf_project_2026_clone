@@ -31,22 +31,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (uiIds.status) {
                     const statEl = document.getElementById(uiIds.status);
-                    if (sensorName === 'Suhu Udara') {
-                        if(reading.avg_value > 30 || reading.avg_value < 15) {
-                            statEl.textContent = 'Peringatan';
-                            statEl.className = 'ds-badge ds-badge-warning';
-                        } else {
-                            statEl.textContent = 'Normal';
-                            statEl.className = 'ds-badge ds-badge-success';
-                        }
-                    } else if (sensorName === 'Kelembaban Udara') {
-                        if(reading.avg_value < 40 || reading.avg_value > 80) {
-                            statEl.textContent = 'Peringatan';
-                            statEl.className = 'ds-badge ds-badge-warning';
-                        } else {
-                            statEl.textContent = 'Normal';
-                            statEl.className = 'ds-badge ds-badge-success';
-                        }
+                    const maxThresh = reading.max_threshold !== null ? reading.max_threshold : Infinity;
+                    const minThresh = reading.min_threshold !== null ? reading.min_threshold : -Infinity;
+                    
+                    if(reading.avg_value > maxThresh || reading.avg_value < minThresh) {
+                        statEl.textContent = 'Peringatan';
+                        statEl.className = 'ds-badge ds-badge-warning';
+                    } else {
+                        statEl.textContent = 'Normal';
+                        statEl.className = 'ds-badge ds-badge-success';
                     }
                 }
             } else {
@@ -80,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!window.isGuestUser) {
             try {
                 const requests = await ISURF_API.getDataRequests();
-                const pendingCount = requests.filter(r => r.status === 'PENDING').length;
+                const pendingCount = requests.filter(r => r.status && r.status.toLowerCase() === 'pending').length;
                 
                 const reqValEl = document.getElementById('metric-requests');
                 if (reqValEl) reqValEl.textContent = pendingCount;

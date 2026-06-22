@@ -7,6 +7,7 @@ from datetime import datetime
 from ..database import get_db
 from ..models.actuator import Actuator
 from ..models.water import WaterUsageLog
+from ..utils.rbac import require_operator
 
 router = APIRouter()
 
@@ -35,7 +36,7 @@ def get_actuator_state(actuator_id: str, db: Session = Depends(get_db)):
     return {"status": actuator.valve_status}
 
 @router.post("/override/{actuator_id}")
-def manual_override(actuator_id: str, payload: OverridePayload, db: Session = Depends(get_db)):
+def manual_override(actuator_id: str, payload: OverridePayload, db: Session = Depends(get_db), user: dict = Depends(require_operator)):
     actuator = db.query(Actuator).filter(Actuator.id == actuator_id).first()
     if not actuator:
         raise HTTPException(status_code=404, detail="Actuator not found")
@@ -69,3 +70,21 @@ def manual_override(actuator_id: str, payload: OverridePayload, db: Session = De
     db.commit()
     
     return {"message": f"Actuator {actuator_id} forced {new_status}"}
+
+@router.get("/usage")
+def get_water_usage(hours: int = 24, db: Session = Depends(get_db)):
+    from datetime import timedelta
+    from datetime import timedelta, timezone
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    logs = db.query(WaterUsageLog).filter(WaterUsageLog.timestamp >= cutoff).order_by(WaterUsageLog.timestamp.asc()).all()
+    
+    total = sum(log.water_discharged for log in logs)
+    latest = logs[-1].water_remaining if logs else 500.0
+    
+    return {
+        "total_discharged": total,
+        "remaining": latest,
+        "history": [
+            {"timestamp": log.timestamp.isoformat(), "value": log.water_discharged} for log in logs
+        ]
+    }

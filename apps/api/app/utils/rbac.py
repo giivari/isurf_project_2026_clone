@@ -14,6 +14,4 @@ class RoleChecker:
         return current_user
 
 # Pre-defined dependencies
-require_admin = RoleChecker(["admin"])
 require_operator = RoleChecker(["admin", "operator"])
-require_viewer = RoleChecker(["admin", "operator", "viewer"])

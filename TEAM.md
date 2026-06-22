@@ -1,28 +1,11 @@
-# PROJECT
+# Profil Tim / Kontributor
 
-> 
-> Dibuat oleh:  
-> * DrEng. Heru Sukoco, S.Si., M.T.  
-> * Deputi Manajer  
-> * Divisi Teknologi Informasi (TI)  
-> * PT. Petrolab Services  
-> 
-> Tanggal dibuat: Selasa, 04 Februari 2025  
-> Tanggal diperbarui: Senin, 05 Mei 2025  
-> Versi: 1.0 - Revisi: 0
-> 
+Pengembangan Revitalisasi Sistem iSURF Lab (IoT for Smart Urban Farming Laboratory) Institut Pertanian Bogor (IPB).
 
-## 📚 PROJECT PROFILE
+## Daftar Kontributor
 
-## TEAM MEMBERS
+- [ ] Givarell (Lead Developer / Capstone Project)
+- [ ] Dosen Pembimbing
+- [ ] Asisten Laboratorium
 
-- [ ] Heru Sukoco
-- [ ] ...
-- [ ] ...
-
-
-
-
-
-
-
+*(Tambahkan nama anggota tim sesuai dengan porsi pengerjaan pada proyek Capstone ini)*

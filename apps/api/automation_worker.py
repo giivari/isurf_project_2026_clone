@@ -21,13 +21,13 @@ def check_conditions(db: Session):
             
         # Get the latest log for these sensors
         latest_logs = db.query(SensorLog).filter(SensorLog.sensor_id.in_(sensor_ids))\
-                        .order_by(desc(SensorLog.timestamp)).limit(len(sensor_ids)).all()
+                        .order_by(desc(SensorLog.date), desc(SensorLog.time)).limit(len(sensor_ids)).all()
                         
         if not latest_logs:
             continue
             
         # Average the values or check any? Let's check average.
-        avg_val = sum(log.value for log in latest_logs) / len(latest_logs)
+        avg_val = sum(log.reading for log in latest_logs) / len(latest_logs)
         
         is_match = False
         if cond.operator == '<' and avg_val < cond.value:

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from ..database import get_db
 from ..models.sensor import Sensor
+from ..utils.rbac import require_operator
 
 router = APIRouter()
 
@@ -19,10 +20,10 @@ class SensorCreate(BaseModel):
 
 class SensorResponse(SensorCreate):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 @router.post("/", response_model=SensorResponse)
-def create_sensor(sensor: SensorCreate, db: Session = Depends(get_db)):
+def create_sensor(sensor: SensorCreate, db: Session = Depends(get_db), user: dict = Depends(require_operator)):
     db_sensor = db.query(Sensor).filter(Sensor.id == sensor.id).first()
     if db_sensor:
         raise HTTPException(status_code=400, detail="Sensor already registered")
@@ -59,7 +60,7 @@ def get_sensor(sensor_id: str, db: Session = Depends(get_db)):
     return db_sensor
 
 @router.put("/{sensor_id}", response_model=SensorResponse)
-def update_sensor(sensor_id: str, sensor: SensorCreate, db: Session = Depends(get_db)):
+def update_sensor(sensor_id: str, sensor: SensorCreate, db: Session = Depends(get_db), user: dict = Depends(require_operator)):
     db_sensor = db.query(Sensor).filter(Sensor.id == sensor_id).first()
     if not db_sensor:
         raise HTTPException(status_code=404, detail="Sensor not found")
@@ -76,7 +77,7 @@ def update_sensor(sensor_id: str, sensor: SensorCreate, db: Session = Depends(ge
     return db_sensor
 
 @router.delete("/{sensor_id}")
-def delete_sensor(sensor_id: str, db: Session = Depends(get_db)):
+def delete_sensor(sensor_id: str, db: Session = Depends(get_db), user: dict = Depends(require_operator)):
     db_sensor = db.query(Sensor).filter(Sensor.id == sensor_id).first()
     if not db_sensor:
         raise HTTPException(status_code=404, detail="Sensor not found")

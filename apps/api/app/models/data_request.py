@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Date, ForeignKey, JSON
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from ..database import Base
 
 class DataRequest(Base):
@@ -20,7 +20,7 @@ class DataRequest(Base):
     status = Column(String(20), default="pending")  # 'pending', 'approved', 'rejected'
     admin_notes = Column(Text)
     download_token = Column(String(64))
-    created_at = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     reviewed_at = Column(DateTime)
     reviewed_by = Column(Integer, ForeignKey("users.id", ondelete="SET NULL"))
 

@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 from ..database import get_db
 from ..models.actuator import Actuator
+from ..utils.rbac import require_operator
 
 router = APIRouter()
 
@@ -18,10 +19,10 @@ class ActuatorCreate(BaseModel):
 
 class ActuatorResponse(ActuatorCreate):
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 @router.post("/", response_model=ActuatorResponse)
-def create_actuator(actuator: ActuatorCreate, db: Session = Depends(get_db)):
+def create_actuator(actuator: ActuatorCreate, db: Session = Depends(get_db), user: dict = Depends(require_operator)):
     db_act = db.query(Actuator).filter(Actuator.id == actuator.id).first()
     if db_act:
         raise HTTPException(status_code=400, detail="Actuator already registered")
@@ -44,7 +45,7 @@ def get_actuator(actuator_id: str, db: Session = Depends(get_db)):
     return db_act
 
 @router.put("/{actuator_id}", response_model=ActuatorResponse)
-def update_actuator(actuator_id: str, actuator: ActuatorCreate, db: Session = Depends(get_db)):
+def update_actuator(actuator_id: str, actuator: ActuatorCreate, db: Session = Depends(get_db), user: dict = Depends(require_operator)):
     db_act = db.query(Actuator).filter(Actuator.id == actuator_id).first()
     if not db_act:
         raise HTTPException(status_code=404, detail="Actuator not found")
@@ -59,7 +60,7 @@ def update_actuator(actuator_id: str, actuator: ActuatorCreate, db: Session = De
     return db_act
 
 @router.delete("/{actuator_id}")
-def delete_actuator(actuator_id: str, db: Session = Depends(get_db)):
+def delete_actuator(actuator_id: str, db: Session = Depends(get_db), user: dict = Depends(require_operator)):
     db_act = db.query(Actuator).filter(Actuator.id == actuator_id).first()
     if not db_act:
         raise HTTPException(status_code=404, detail="Actuator not found")
@@ -72,7 +73,7 @@ class ActuatorToggle(BaseModel):
     is_auto_enabled: bool
 
 @router.put("/{actuator_id}/toggle_auto", response_model=ActuatorResponse)
-def toggle_actuator_auto(actuator_id: str, payload: ActuatorToggle, db: Session = Depends(get_db)):
+def toggle_actuator_auto(actuator_id: str, payload: ActuatorToggle, db: Session = Depends(get_db), user: dict = Depends(require_operator)):
     db_act = db.query(Actuator).filter(Actuator.id == actuator_id).first()
     if not db_act:
         raise HTTPException(status_code=404, detail="Actuator not found")

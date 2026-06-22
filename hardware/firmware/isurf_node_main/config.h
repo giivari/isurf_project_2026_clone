@@ -6,8 +6,10 @@
 // ==========================================
 
 // Sensors
-#define PIN_TDS_SENSOR      A0    // DFRobot TDS Sensor
-#define PIN_PH_SENSOR       A1    // Analog Soil pH Sensor
+#define PIN_DHT             2     // DHT22 (Suhu & Kelembaban Udara)
+#define PIN_SOIL_MOISTURE   A0    // Analog Capacitive Soil Moisture Sensor
+#define PIN_SOIL_TEMP       A1    // Analog Soil Temperature Sensor (PT100/Thermistor)
+#define PIN_PH_SENSOR       A2    // Analog Soil pH Sensor
 
 // Actuators
 #define PIN_RELAY_PUMP      8     // Relay Channel 1 (Water Pump/Valve)

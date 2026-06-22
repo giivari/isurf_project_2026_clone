@@ -3,6 +3,20 @@
 /yii_test
 /yii_test.bat
 
+# Environments
+.env
+.env.local
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+venv/
+.venv/
+
+# Log files
+*.log
+
 # phpstorm project files
 .idea
 

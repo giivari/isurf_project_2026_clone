@@ -29,7 +29,7 @@ class SiteController extends Controller
         return [
             'access' => [
                 'class' => AccessControl::class,
-                'only' => ['logout', 'signup', 'alerts', 'areas', 'monitoring'],
+                'only' => ['logout', 'signup', 'alerts', 'areas', 'area-details', 'monitoring'],
                 'rules' => [
                     [
                         'actions' => ['signup'],
@@ -37,7 +37,7 @@ class SiteController extends Controller
                         'roles' => ['?'],
                     ],
                     [
-                        'actions' => ['logout', 'alerts', 'areas', 'monitoring'],
+                        'actions' => ['logout', 'alerts', 'areas', 'area-details', 'monitoring'],
                         'allow' => true,
                         'roles' => ['@'],
                     ],
@@ -105,10 +105,6 @@ class SiteController extends Controller
         return $this->render('request-data');
     }
 
-    public function actionManageRequests()
-    {
-        return $this->render('manage-requests');
-    }
 
     /**
      * Displays alerts & logs page.
@@ -301,5 +297,9 @@ class SiteController extends Controller
 
     public function actionAreas() {
         return $this->render("areas");
+    }
+
+    public function actionAreaDetails() {
+        return $this->render("area-details");
     }
 }
