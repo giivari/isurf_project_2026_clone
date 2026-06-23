@@ -1,7 +1,7 @@
 <?php
 /** @var yii\web\View $this */
 $this->title = 'Alerts & Logs';
-$this->registerJsFile('@web/js/isurf-api.js?v=1.2', ['depends' => [\yii\web\JqueryAsset::class]]);
+$this->registerJsFile('@web/js/isurf-api.js?v=1.3', ['depends' => [\yii\web\JqueryAsset::class]]);
 ?>
 <div style="display: flex; flex-direction: column; gap: var(--space-5);">
     <div style="display: flex; justify-content: space-between; align-items: flex-end;">
@@ -13,7 +13,7 @@ $this->registerJsFile('@web/js/isurf-api.js?v=1.2', ['depends' => [\yii\web\Jque
     </div>
 
     <!-- Alerts List -->
-    <div id="alerts-container" style="background: white; border-radius: var(--radius-md); box-shadow: var(--elevation-1); display: flex; flex-direction: column; border: 1px solid var(--gray-200);">
+    <div id="alerts-container" style="background: white; border-radius: var(--radius-md); box-shadow: var(--elevation-1); display: flex; flex-direction: column; border: 1px solid var(--gray-200); overflow: hidden;">
         <div style="padding: 40px; text-align: center;">
             <p class="text-body" style="color: var(--gray-500); font-weight: 500;">Memuat data alert...</p>
         </div>

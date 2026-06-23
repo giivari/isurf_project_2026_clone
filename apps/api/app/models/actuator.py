@@ -11,6 +11,8 @@ class Actuator(Base):
     valve_status = Column(String(20), default='OFF') # 'ON' / 'OFF'
     is_auto_enabled = Column(Boolean, default=True)
     area_id = Column(Integer, ForeignKey("areas.id", ondelete="CASCADE"), nullable=True)
+    auto_off_duration_sec = Column(Integer, default=0)
+    last_turned_on_at = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=func.now())
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 

@@ -4,6 +4,24 @@ from .routers import areas, sensors, actuators, readings, iot_gateway, auth, ale
 
 app = FastAPI(title="iSURF IoT Monitoring API", root_path="/isurf/v1")
 
+# Auto-migrate new columns for actuator auto-shutoff
+try:
+    from sqlalchemy import text
+    from .database import engine
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE actuators ADD COLUMN auto_off_duration_sec INT DEFAULT 0"))
+        conn.commit()
+except Exception:
+    pass
+try:
+    from sqlalchemy import text
+    from .database import engine
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE actuators ADD COLUMN last_turned_on_at DATETIME NULL"))
+        conn.commit()
+except Exception:
+    pass
+
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,

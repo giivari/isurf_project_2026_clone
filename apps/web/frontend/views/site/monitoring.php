@@ -265,7 +265,7 @@ async function loadLogs() {
     const aBody = document.getElementById('logsActuatorTableBody');
     
     try {
-        const res = await fetch('https://api.digdaya.net/isurf/v1/readings/latest');
+        const res = await fetch('https://isurf.digdaya.net/isurf/v1/api/readings/latest');
         if (res.ok) {
             const data = await res.json();
             if (data.length === 0) {
@@ -273,23 +273,30 @@ async function loadLogs() {
             } else {
                 let html = '';
                 data.forEach(log => {
-                    let isAnomaly = false;
                     let statusTxt = 'Normal';
+                    let statusColor = '#16A34A'; // Green for Normal
+
                     if (log.min_threshold !== null && log.avg_value < log.min_threshold) {
-                        isAnomaly = true; statusTxt = 'Kritis (Low)';
-                    }
-                    if (log.max_threshold !== null && log.avg_value > log.max_threshold) {
-                        isAnomaly = true; statusTxt = 'Kritis (High)';
+                        statusTxt = 'Rendah';
+                        statusColor = '#EAB308'; // Yellow/Orange for Rendah
+                    } else if (log.max_threshold !== null && log.avg_value > log.max_threshold) {
+                        statusTxt = 'Tinggi';
+                        statusColor = '#DC2626'; // Red for Tinggi
                     }
                     
-                    let anomalyBadge = isAnomaly ? '<span class="ds-badge ds-badge-danger" style="background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:4px;">Ya</span>' : '<span class="ds-badge ds-badge-success" style="background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:4px;">Tidak</span>';
-                    let statusBadge = isAnomaly ? `<span style="color:#DC2626;font-weight:600;">${statusTxt}</span>` : `<span style="color:#16A34A;font-weight:600;">${statusTxt}</span>`;
+                    if (log.is_anomaly) {
+                        statusTxt = 'Kritis';
+                        statusColor = '#DC2626'; // Red for Kritis
+                    }
+                    
+                    let anomalyBadge = log.is_anomaly ? '<span class="ds-badge ds-badge-danger" style="background:#FEE2E2;color:#991B1B;padding:2px 8px;border-radius:4px;">Ya</span>' : '<span class="ds-badge ds-badge-success" style="background:#DCFCE7;color:#166534;padding:2px 8px;border-radius:4px;">Tidak</span>';
+                    let statusBadge = `<span style="color:${statusColor};font-weight:600;">${statusTxt}</span>`;
                     
                     let areaObj = allAreas.find(a => a.id === log.area_id);
                     let areaName = areaObj ? areaObj.name : '-';
                     let areaPlant = areaObj ? areaObj.plant : '-';
-                    let minT = log.min_threshold !== null ? log.min_threshold : '-';
-                    let maxT = log.max_threshold !== null ? log.max_threshold : '-';
+                    let minT = log.min_value !== null ? parseFloat(log.min_value).toFixed(2) : '-';
+                    let maxT = log.max_value !== null ? parseFloat(log.max_value).toFixed(2) : '-';
 
                     html += `<tr>
                         <td>${log.date}</td>
@@ -313,11 +320,38 @@ async function loadLogs() {
         sBody.innerHTML = '<tr><td colspan="10" style="text-align:center; padding: 20px; color: var(--gray-500);">Gagal memuat data dari API. Pastikan FastAPI berjalan.</td></tr>';
     }
 
-    aBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--gray-500);">Log aktuator belum tersedia (Endpoint belum diintegrasikan).</td></tr>';
+    try {
+        const resAct = await fetch('https://isurf.digdaya.net/isurf/v1/api/irrigation/usage?hours=168');
+        if (resAct.ok) {
+            const dataAct = await resAct.json();
+            if (!dataAct.history || dataAct.history.length === 0) {
+                aBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--gray-500);">Belum ada riwayat aktivitas aktuator.</td></tr>';
+            } else {
+                let htmlAct = '';
+                dataAct.history.forEach(log => {
+                    const dateObj = new Date(log.timestamp + 'Z');
+                    const localDate = dateObj.toLocaleDateString('id-ID');
+                    const localTime = dateObj.toLocaleTimeString('id-ID');
+                    
+                    htmlAct += `<tr>
+                        <td>${localDate} ${localTime}</td>
+                        <td style="font-weight: 500;">${log.actuator_name}</td>
+                        <td style="color: var(--blue-600); font-weight: 600;">+ ${parseFloat(log.value).toFixed(2)} L</td>
+                        <td style="color: var(--gray-700); font-weight: 600;">${parseFloat(log.remaining).toFixed(2)} L</td>
+                    </tr>`;
+                });
+                aBody.innerHTML = htmlAct;
+            }
+        } else {
+            aBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--gray-500);">Gagal memuat log aktuator dari API.</td></tr>';
+        }
+    } catch(err) {
+        aBody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding: 20px; color: var(--gray-500);">Kesalahan jaringan saat memuat log aktuator.</td></tr>';
+    }
 }
 
 function customDownload() {
-    window.open('https://api.digdaya.net/isurf/v1/data-requests/custom-download?date_start=2020-01-01&date_end=2030-01-01', '_blank');
+    window.open('https://isurf.digdaya.net/isurf/v1/api/data-requests/custom-download?date_start=2020-01-01&date_end=2030-01-01', '_blank');
 }
 
 // Manage Requests Logic
@@ -348,7 +382,7 @@ function renderRequestsTable(data) {
         else if(req.status === 'APPROVED') statusBadge = '<span class="ds-badge ds-badge-success">Approved</span>';
         else statusBadge = '<span class="ds-badge ds-badge-danger">Rejected</span>';
 
-        let docLink = req.document_path ? `<a href="http://localhost:8080${req.document_path}" target="_blank" style="color: var(--blue-500);">Lihat PDF</a>` : '-';
+        let docLink = req.document_path ? `<a href="https://isurf.digdaya.net/isurf/v1/api/data-requests/document/${req.document_path.split('/').pop()}" target="_blank" style="color: var(--blue-500);">Lihat PDF</a>` : '-';
 
         html += `
         <tr>
@@ -390,7 +424,7 @@ async function submitReview() {
     btn.disabled = true;
 
     try {
-        const res = await fetch(`https://api.digdaya.net/isurf/v1/data-requests/${id}/review`, {
+        const res = await fetch(`https://isurf.digdaya.net/isurf/v1/api/data-requests/${id}/review`, {
             method: 'PUT',
             headers: { 
                 'Authorization': 'Bearer ' + jwtToken,

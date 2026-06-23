@@ -33,6 +33,17 @@ def get_latest_readings(db: Session = Depends(get_db)):
         key = f"{agg.area_id}_{agg.data_type}"
         if key not in latest_map:
             t = thresholds_map.get(key, {})
+            
+            # Re-evaluate Physical Anomaly on the aggregated value
+            is_anomaly = False
+            dt = agg.data_type.lower()
+            if dt == "ph" and (agg.avg_value < 0 or agg.avg_value > 14):
+                is_anomaly = True
+            elif dt in ["kelembaban", "kelembapan", "humidity"] and (agg.avg_value < 0 or agg.avg_value > 100):
+                is_anomaly = True
+            elif dt in ["suhu", "temperature"] and (agg.avg_value < -50 or agg.avg_value > 100):
+                is_anomaly = True
+
             latest_map[key] = {
                 "id": agg.id,
                 "area_id": agg.area_id,
@@ -43,7 +54,8 @@ def get_latest_readings(db: Session = Depends(get_db)):
                 "date": str(agg.date),
                 "time": str(agg.time),
                 "min_threshold": t.get("min_threshold"),
-                "max_threshold": t.get("max_threshold")
+                "max_threshold": t.get("max_threshold"),
+                "is_anomaly": is_anomaly
             }
             
     return list(latest_map.values())
@@ -60,12 +72,24 @@ def get_history(area_id: int, data_type: str, hours: int = 24, db: Session = Dep
         AreaAggregation.date >= cutoff.date()
     ).order_by(AreaAggregation.date.asc(), AreaAggregation.time.asc()).all()
     
-    return [
-        {
+    response = []
+    for a in aggs:
+        is_anomaly = False
+        dt = a.data_type.lower()
+        if dt == "ph" and (a.avg_value < 0 or a.avg_value > 14):
+            is_anomaly = True
+        elif dt in ["kelembaban", "kelembapan", "humidity"] and (a.avg_value < 0 or a.avg_value > 100):
+            is_anomaly = True
+        elif dt in ["suhu", "temperature"] and (a.avg_value < -50 or a.avg_value > 100):
+            is_anomaly = True
+
+        response.append({
             "id": a.id,
             "avg_value": a.avg_value,
             "min_value": a.min_value,
             "max_value": a.max_value,
-            "timestamp": f"{a.date} {a.time}"
-        } for a in aggs
-    ]
+            "timestamp": f"{a.date} {a.time}",
+            "is_anomaly": is_anomaly
+        })
+        
+    return response

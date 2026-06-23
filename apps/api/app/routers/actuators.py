@@ -16,6 +16,7 @@ class ActuatorCreate(BaseModel):
     valve_status: str = 'OFF'
     is_auto_enabled: bool = True
     area_id: int = None
+    auto_off_duration_sec: int = 0
 
 class ActuatorResponse(ActuatorCreate):
     class Config:
@@ -54,6 +55,7 @@ def update_actuator(actuator_id: str, actuator: ActuatorCreate, db: Session = De
     db_act.flow_rate_per_sec = actuator.flow_rate_per_sec
     db_act.valve_status = actuator.valve_status
     db_act.area_id = actuator.area_id
+    db_act.auto_off_duration_sec = actuator.auto_off_duration_sec
 
     db.commit()
     db.refresh(db_act)

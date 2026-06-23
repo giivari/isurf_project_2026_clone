@@ -14,8 +14,7 @@ def aggregate_sensor_data(area_id: int, data_type: str, current_date, current_ti
             SensorLog.date == current_date,
             # We aggregate for this specific payload timestamp
             # In a real app, maybe group by minute, but for simplicity we'll just take the exact time
-            SensorLog.time == current_time,
-            SensorLog.anomalies == False
+            SensorLog.time == current_time
         ).all()
 
         if not logs:

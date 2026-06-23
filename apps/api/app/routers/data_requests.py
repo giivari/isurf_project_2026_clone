@@ -1,14 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from sqlalchemy.orm import Session
 from typing import List, Optional
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import uuid
 import os
 import shutil
 import json
 import csv
 from io import StringIO
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, FileResponse
 
 from ..database import get_db
 from ..models.data_request import DataRequest
@@ -101,9 +101,8 @@ def review_request(
 
     db_request.status = status_upper
     db_request.admin_notes = review.admin_notes
-    from datetime import timezone
     db_request.reviewed_at = datetime.now(timezone.utc)
-    db_request.reviewed_by = 1 # Default admin ID for MVP
+    db_request.reviewed_by = None # Bypass FK error if admin ID 1 doesn't exist
     
     if status_upper == "APPROVED":
         db_request.download_token = str(uuid.uuid4())
@@ -113,6 +112,13 @@ def review_request(
     db.commit()
     db.refresh(db_request)
     return db_request
+
+@router.get("/document/{filename}")
+def get_document(filename: str):
+    file_path = os.path.join(UPLOAD_DIR, filename)
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="Document not found")
+    return FileResponse(file_path, media_type="application/pdf")
 
 @router.get("/download/{download_token}")
 def download_data(download_token: str, db: Session = Depends(get_db)):

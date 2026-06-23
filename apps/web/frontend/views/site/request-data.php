@@ -126,10 +126,10 @@ $this->title = 'Request Data Download';
 
                 <div class="form-group" style="margin-bottom: var(--space-6);">
                     <label class="text-caption font-medium text-gray-900" style="display: block; margin-bottom: 8px;">Surat Pengajuan (PDF Bertanda Tangan)</label>
-                    <div style="border: 2px dashed var(--gray-300); padding: var(--space-5); text-align: center; border-radius: var(--radius-sm); background: var(--gray-50); cursor: pointer;" onclick="document.getElementById('docInput').click()">
-                        <svg class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                        <p class="text-caption text-gray-600" id="fileNameDisplay">Klik untuk memilih file PDF (Max 5MB)</p>
-                        <input type="file" id="docInput" name="document" accept="application/pdf" required style="display: none;" onchange="document.getElementById('fileNameDisplay').textContent = this.files[0] ? this.files[0].name : 'Klik untuk memilih file PDF (Max 5MB)'">
+                    <div id="dropzoneArea" style="border: 2px dashed var(--gray-300); padding: var(--space-5); text-align: center; border-radius: var(--radius-sm); background: var(--gray-50); cursor: pointer; transition: all 0.3s ease;" onclick="document.getElementById('docInput').click()">
+                        <svg id="uploadIcon" class="w-8 h-8 mx-auto mb-2 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        <p class="text-caption text-gray-600" id="fileNameDisplay" style="margin-bottom: 0;">Klik untuk memilih file PDF (Max 5MB)</p>
+                        <input type="file" id="docInput" name="document" accept="application/pdf" style="display: none;" onchange="handleFileUpload(this)">
                     </div>
                 </div>
 
@@ -209,6 +209,24 @@ function updateParamOptions() {
     }
 }
 
+function handleFileUpload(input) {
+    const display = document.getElementById('fileNameDisplay');
+    const dropzone = document.getElementById('dropzoneArea');
+    const icon = document.getElementById('uploadIcon');
+    
+    if (input.files && input.files[0]) {
+        display.innerHTML = `<strong style="color: var(--green-600); font-size: 14px;">✓ File Terpilih:</strong><br>${input.files[0].name}`;
+        dropzone.style.borderColor = 'var(--green-500)';
+        dropzone.style.background = '#F0FDF4';
+        icon.style.color = 'var(--green-500)';
+    } else {
+        display.innerHTML = 'Klik untuk memilih file PDF (Max 5MB)';
+        dropzone.style.borderColor = 'var(--gray-300)';
+        dropzone.style.background = 'var(--gray-50)';
+        icon.style.color = 'var(--gray-400)';
+    }
+}
+
 document.getElementById('requestDataForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -227,16 +245,19 @@ document.getElementById('requestDataForm').addEventListener('submit', async func
     }
 
     const fileInput = document.getElementById('docInput');
-    if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        if (file.type !== 'application/pdf') {
-            alert('File surat pengajuan harus berformat PDF.');
-            return;
-        }
-        if (file.size > 5 * 1024 * 1024) { // 5MB
-            alert('Ukuran file PDF maksimal 5MB.');
-            return;
-        }
+    if (fileInput.files.length === 0) {
+        alert('Mohon unggah Surat Pengajuan (PDF Bertanda Tangan) terlebih dahulu.');
+        return;
+    }
+    
+    const file = fileInput.files[0];
+    if (file.type !== 'application/pdf') {
+        alert('File surat pengajuan harus berformat PDF.');
+        return;
+    }
+    if (file.size > 5 * 1024 * 1024) { // 5MB
+        alert('Ukuran file PDF maksimal 5MB.');
+        return;
     }
     // --- VALIDATION END ---
 
@@ -280,10 +301,24 @@ document.getElementById('requestDataForm').addEventListener('submit', async func
         btn.textContent = 'Kirim Pengajuan';
         return;
     }
-    formData.set('requested_attributes', JSON.stringify(selectedAttrs));
+    
+    // Map Frontend Names to Backend API Expected Names
+    formData.set('date_start', formData.get('datetime_start').split('T')[0]);
+    formData.set('date_end', formData.get('datetime_end').split('T')[0]);
+    formData.set('data_type', formData.get('log_category'));
+    formData.set('requested_sensors', JSON.stringify(selectedParams));
 
+    // Remove incorrect names
+    formData.delete('datetime_start');
+    formData.delete('datetime_end');
+    formData.delete('log_category');
+    formData.delete('param_all');
+    formData.delete('attr_all');
+    formData.delete('area');
+    formData.delete('requested_parameters');
+    
     try {
-        const response = await fetch('https://api.digdaya.net/isurf/v1/data-requests/', {
+        const response = await fetch('https://isurf.digdaya.net/isurf/v1/api/data-requests/', {
             method: 'POST',
             body: formData
         });
@@ -295,7 +330,11 @@ document.getElementById('requestDataForm').addEventListener('submit', async func
             document.getElementById('trackingCodeDisplay').textContent = result.tracking_code;
         } else {
             const err = await response.json();
-            alert('Gagal mengirim pengajuan: ' + (err.detail || 'Unknown error'));
+            let errorMsg = err.detail || 'Unknown error';
+            if (Array.isArray(errorMsg)) {
+                errorMsg = errorMsg.map(e => `${e.loc[e.loc.length - 1]}: ${e.msg}`).join('\n');
+            }
+            alert('Gagal mengirim pengajuan:\n' + errorMsg);
             btn.disabled = false;
             btn.textContent = 'Kirim Pengajuan';
         }

@@ -212,6 +212,10 @@ $this->title = 'Manajemen Area & Perangkat';
                 <label style="display: block; font-size: 13px; margin-bottom: 4px;">Debit Air (Liter / Detik) *</label>
                 <input type="number" step="0.01" id="newActFlow" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;" value="0.5">
             </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px;">Batas Durasi Maksimal (Detik)</label>
+                <input type="number" id="newActDuration" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;" value="0" placeholder="0 = tanpa batas">
+            </div>
         </div>
         <div style="padding: var(--space-4); border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: 8px;">
             <button class="ds-btn-outline" onclick="document.getElementById('addActuatorModal').style.display='none'">Batal</button>
@@ -275,6 +279,10 @@ $this->title = 'Manajemen Area & Perangkat';
             <div style="margin-bottom: 12px;">
                 <label style="display: block; font-size: 13px; margin-bottom: 4px;">Debit Air (Liter / Detik) *</label>
                 <input type="number" step="0.01" id="editActFlow" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;">
+            </div>
+            <div style="margin-bottom: 12px;">
+                <label style="display: block; font-size: 13px; margin-bottom: 4px;">Batas Durasi Maksimal (Detik)</label>
+                <input type="number" id="editActDuration" style="width: 100%; padding: 8px; border: 1px solid var(--gray-300); border-radius: 4px;" placeholder="0 = tanpa batas">
             </div>
         </div>
         <div style="padding: var(--space-4); border-top: 1px solid var(--gray-200); display: flex; justify-content: flex-end; gap: 8px;">
@@ -681,7 +689,8 @@ async function submitNewActuator() {
             id: document.getElementById('newActId').value,
             name: document.getElementById('newActName').value,
             flow_rate_per_sec: parseFloat(document.getElementById('newActFlow').value),
-            area_id: currentManageAreaId
+            area_id: currentManageAreaId,
+            auto_off_duration_sec: parseInt(document.getElementById('newActDuration').value) || 0
         });
         alert('Aktuator berhasil ditambahkan');
         document.getElementById('addActuatorModal').style.display = 'none';
@@ -736,6 +745,7 @@ window.openEditActuatorModal = function(actuator) {
     document.getElementById('editActId').value = actuator.id;
     document.getElementById('editActName').value = actuator.name;
     document.getElementById('editActFlow').value = actuator.flow_rate_per_sec;
+    document.getElementById('editActDuration').value = actuator.auto_off_duration_sec || 0;
     document.getElementById('editActuatorModal').style.display = 'flex';
 };
 
@@ -746,7 +756,8 @@ window.submitEditActuator = async function() {
             id: id,
             name: document.getElementById('editActName').value,
             flow_rate_per_sec: parseFloat(document.getElementById('editActFlow').value),
-            area_id: currentManageAreaId
+            area_id: currentManageAreaId,
+            auto_off_duration_sec: parseInt(document.getElementById('editActDuration').value) || 0
         });
         alert('Aktuator berhasil diperbarui');
         document.getElementById('editActuatorModal').style.display = 'none';

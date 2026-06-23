@@ -31,8 +31,12 @@ def evaluate_conditions(area_id: int, data_type: str, current_value: float):
                     Actuator.is_auto_enabled == True
                 ).all()
 
+                from sqlalchemy import func
                 for actuator in actuators:
                     if actuator.valve_status != rule.action:
+                        if actuator.valve_status == "OFF" and rule.action == "ON":
+                            actuator.last_turned_on_at = func.now()
+
                         if actuator.valve_status == "ON" and rule.action == "OFF":
                             duration_sec = 60
                             volume_used = duration_sec * actuator.flow_rate_per_sec

@@ -35,6 +35,8 @@ def get_actuator_state(actuator_id: str, db: Session = Depends(get_db)):
 
     return {"status": actuator.valve_status}
 
+from sqlalchemy import func
+
 @router.post("/override/{actuator_id}")
 def manual_override(actuator_id: str, payload: OverridePayload, db: Session = Depends(get_db), user: dict = Depends(require_operator)):
     actuator = db.query(Actuator).filter(Actuator.id == actuator_id).first()
@@ -47,6 +49,9 @@ def manual_override(actuator_id: str, payload: OverridePayload, db: Session = De
     if new_status not in ['ON', 'OFF']:
         raise HTTPException(status_code=400, detail="Invalid command")
         
+    if old_status == 'OFF' and new_status == 'ON':
+        actuator.last_turned_on_at = func.now()
+
     if old_status == 'ON' and new_status == 'OFF':
         # Calculate water used. Let's assume 1 minute passed for demo purposes
         # or we could track precise ON time. We'll simulate 1 minute duration.
@@ -73,18 +78,23 @@ def manual_override(actuator_id: str, payload: OverridePayload, db: Session = De
 
 @router.get("/usage")
 def get_water_usage(hours: int = 24, db: Session = Depends(get_db)):
-    from datetime import timedelta
     from datetime import timedelta, timezone
     cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
-    logs = db.query(WaterUsageLog).filter(WaterUsageLog.timestamp >= cutoff).order_by(WaterUsageLog.timestamp.asc()).all()
+    logs = db.query(WaterUsageLog).filter(WaterUsageLog.timestamp >= cutoff).order_by(WaterUsageLog.timestamp.desc()).all()
     
     total = sum(log.water_discharged for log in logs)
-    latest = logs[-1].water_remaining if logs else 500.0
+    latest = logs[0].water_remaining if logs else 500.0
     
     return {
         "total_discharged": total,
         "remaining": latest,
         "history": [
-            {"timestamp": log.timestamp.isoformat(), "value": log.water_discharged} for log in logs
+            {
+                "timestamp": log.timestamp.isoformat(), 
+                "value": log.water_discharged,
+                "remaining": log.water_remaining,
+                "actuator_id": log.actuator_id,
+                "actuator_name": log.actuator.name if log.actuator else log.actuator_id
+            } for log in logs
         ]
     }
