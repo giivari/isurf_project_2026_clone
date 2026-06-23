@@ -34,6 +34,7 @@ def check_actuator_limits(db_session: Session):
                 if diff >= act.auto_off_duration_sec:
                     # Time to turn off
                     act.valve_status = "OFF"
+                    act.is_auto_enabled = False # Disable auto to prevent loop
                     
                     # Log water usage
                     volume_used = diff * act.flow_rate_per_sec
@@ -53,7 +54,7 @@ def check_actuator_limits(db_session: Session):
                     alert = Alert(
                         sensor_id=None,
                         alert_type="Auto Shutoff",
-                        message=f"Pompa {act.name} dimatikan otomatis setelah menyala {act.auto_off_duration_sec} detik.",
+                        message=f"Pompa {act.name} dimatikan paksa setelah menyala {act.auto_off_duration_sec} detik (Mode Otomatis dinonaktifkan).",
                         value=diff,
                         threshold_exceeded=act.auto_off_duration_sec,
                         is_read=False
